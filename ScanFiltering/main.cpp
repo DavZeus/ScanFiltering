@@ -56,12 +56,49 @@ int main() {
 		//apply_filter(gray_img, true, &bilateralFilter, 9, 50, 50, BORDER_DEFAULT),
 		//apply_filter(gray_img, true, &GaussianBlur, cv::Size(3, 3), 0, 0, BORDER_DEFAULT),
 		//apply_filter(gray_img, true, &medianBlur, 3),
-		//apply_filter(gray_img, true, &dilate, )
+		apply_filter(gray_img, 
+								 true,
+								 &dilate,
+								 Mat::ones(3, 3, gray_img.type()),
+								 Point(-1, -1),
+								 3,
+								 BORDER_CONSTANT,
+								 morphologyDefaultBorderValue()
+		),
+		apply_filter(gray_img, 
+								 true,
+								 &erode,
+								 Mat::ones(3, 3, gray_img.type()),
+								 Point(-1, -1),
+								 3,
+								 BORDER_CONSTANT,
+								 morphologyDefaultBorderValue()
+		),
+		apply_filter(gray_img,
+								 true,
+								 &morphologyEx,
+								 MORPH_CLOSE,
+								 Mat::ones(3, 3, gray_img.type()),
+								 Point(-1, -1),
+							   1,
+								 BORDER_CONSTANT,
+							   morphologyDefaultBorderValue()
+		),
+		apply_filter(gray_img,
+								 true,
+								 &morphologyEx,
+								 MORPH_OPEN,
+								 Mat::ones(3, 3, gray_img.type()),
+								 Point(-1, -1),
+							   2,
+								 BORDER_CONSTANT,
+							   morphologyDefaultBorderValue()
+		),
 	};
 
 	for (const auto img : filtered_images) {
 		detect_edges(img);
-		const auto bw_img = cvt_non_white_to_black(img);
-		detect_edges(bw_img);
+		//const auto bw_img = cvt_non_white_to_black(img);
+		//detect_edges(bw_img);
 	}
 }
