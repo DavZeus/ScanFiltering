@@ -6,6 +6,8 @@
 
 using namespace cv;
 
+#define PRINT_TYPE(x) fmt::print("Img type: {}", x);
+
 const std::string_view window_name = "1";
 
 void show_image(Mat img) {
@@ -23,27 +25,52 @@ Mat apply_filter(Mat img, bool show, F func, Args... args) {
 }
 
 Mat apply_dilate(Mat img, bool show = true) {
-  return apply_filter(img, show, &dilate, Mat::ones(3, 3, img.type()),
-                      Point(-1, -1), 3, BORDER_CONSTANT,
-                      morphologyDefaultBorderValue());
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteration_number = 3;
+  return apply_filter(img, show, &dilate, kernel, anchor, iteration_number,
+                      BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
 Mat apply_erode(Mat img, bool show = true) {
-  return apply_filter(img, show, &erode, Mat::ones(3, 3, img.type()),
-                      Point(-1, -1), 3, BORDER_CONSTANT,
-                      morphologyDefaultBorderValue());
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteration_number = 3;
+  return apply_filter(img, show, &erode, kernel, anchor, iteration_number,
+                      BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
 Mat apply_closer(Mat img, bool show = true) {
-  return apply_filter(img, show, &morphologyEx, MORPH_CLOSE,
-                      Mat::ones(3, 3, img.type()), Point(-1, -1), 1,
-                      BORDER_CONSTANT, morphologyDefaultBorderValue());
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteration_number = 3;
+  return apply_filter(img, show, &morphologyEx, MORPH_CLOSE, kernel, anchor,
+                      iteration_number, BORDER_CONSTANT,
+                      morphologyDefaultBorderValue());
 }
 
 Mat apply_opening(Mat img, bool show = true) {
-  return apply_filter(img, show, &morphologyEx, MORPH_OPEN,
-                      Mat::ones(3, 3, img.type()), Point(-1, -1), 2,
-                      BORDER_CONSTANT, morphologyDefaultBorderValue());
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteration_number = 3;
+  return apply_filter(img, show, &morphologyEx, MORPH_OPEN, kernel, anchor,
+                      iteration_number, BORDER_CONSTANT,
+                      morphologyDefaultBorderValue());
+}
+
+Mat apply_custom(Mat img, bool show = true) {
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteratioin_number = 1;
+  Mat first_stage =
+      apply_filter(img, show, &dilate, kernel, anchor, iteratioin_number,
+                   BORDER_CONSTANT, morphologyDefaultBorderValue());
+  Mat second_stage =
+      apply_filter(first_stage, show, &erode, kernel, anchor, 2,
+                   BORDER_CONSTANT, morphologyDefaultBorderValue());
+  return apply_filter(second_stage, show, &dilate, kernel, anchor,
+                      iteratioin_number, BORDER_CONSTANT,
+                      morphologyDefaultBorderValue());
 }
 
 std::string generate_time_string() {
@@ -74,8 +101,8 @@ void save_image(Mat img, std::string path, std::string filename) {
 
 Mat detect_edges(Mat img, bool show = true) {
   Mat edges;
-  const double low_threshold = 240;
-  const double high_threshhold = 250;
+  const double low_threshold = 254;
+  const double high_threshhold = 255;
   Canny(img, edges, low_threshold, high_threshhold, 3);
   if (show)
     show_image(edges);
@@ -93,17 +120,37 @@ Mat cvt_non_white_to_black(Mat img, bool show = true) {
   return bw_img;
 }
 
+template <class F>
+void filter_img(Mat img, std::string folder, std::string name, F func,
+                bool show = true) {
+  Mat f_img = func(img, show);
+  Mat e_f_img = detect_edges(f_img, show);
+  Mat bw_f_img = cvt_non_white_to_black(f_img, show);
+  Mat e_bw_f_img = detect_edges(bw_f_img, show);
+
+  save_image(f_img, folder, name);
+  save_image(e_f_img, folder, name + "-edges");
+  save_image(bw_f_img, folder, name + "-bw");
+  save_image(e_bw_f_img, folder, name + "-bw-edges");
+}
+
 int main() {
   using namespace cv;
-  namedWindow(window_name.data(), WindowFlags::WINDOW_KEEPRATIO);
+  const bool show_images = false;
+
+  if (show_images) {
+    namedWindow(window_name.data(), WindowFlags::WINDOW_KEEPRATIO);
+  }
 
   Mat img = imread("20k_edge.bmp");
-  show_image(img);
-
   Mat gray_img;
   cvtColor(img, gray_img, COLOR_RGB2GRAY);
-  detect_edges(gray_img);
 
+  std::string folder = make_save_folder();
+  save_image(detect_edges(gray_img, show_images), folder, "orignal-edges");
+  filter_img(gray_img, folder, "cl", &apply_closer, show_images);
+  filter_img(gray_img, folder, "op", &apply_opening, show_images);
+  filter_img(gray_img, folder, "custom", &apply_custom, show_images);
   // std::array filtered_images = {
   //  apply_filter(gray_img, true, &filter2D, gray_img.type(), Mat::ones(3,
   //  3, CV_32F) / static_cast<float>(9), Point(-1, -1), 0, BORDER_DEFAULT),
@@ -116,23 +163,7 @@ int main() {
   //  apply_filter(gray_img, true, &GaussianBlur, cv::Size(3, 3), 0, 0,
   //  BORDER_DEFAULT),
   //  apply_filter(gray_img, true, &medianBlur, 3),
-  // apply_closer(gray_img),
-  // apply_opening(gray_img),
+  //  apply_closer(gray_img),
+  //  apply_opening(gray_img),
   //};
-
-  Mat cl_img = apply_closer(gray_img);
-
-  std::string folder = make_save_folder();
-
-  Mat cl_edges = detect_edges(cl_img);
-  save_image(cl_edges, folder, "closer-edges");
-  Mat bw_cl_img = cvt_non_white_to_black(cl_img);
-  save_image(bw_cl_img, folder, "bw-closer");
-  Mat bw_cl_edges = detect_edges(bw_cl_img);
-  save_image(bw_cl_edges, folder, "bw-cl-edges");
-  // for (const auto img : filtered_images) {
-  // detect_edges(img);
-  // const auto bw_img = cvt_non_white_to_black(img);
-  // detect_edges(bw_img);
-  //}
 }
