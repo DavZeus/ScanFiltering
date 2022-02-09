@@ -1,7 +1,6 @@
-#include <array>
 #include <filesystem>
 #include <fmt/core.h>
-#include <numbers>
+#include <functional>
 #include <opencv2/opencv.hpp>
 
 using namespace cv;
@@ -18,7 +17,7 @@ void show_image(Mat img) {
 template <class F, class... Args>
 Mat apply_filter(Mat img, bool show, F func, Args... args) {
   Mat filtered_img;
-  func(img, filtered_img, std::forward<Args>(args)...);
+  std::invoke(func, img, filtered_img, std::forward<Args>(args)...);
   if (show)
     show_image(filtered_img);
   return filtered_img;
@@ -50,7 +49,8 @@ Mat apply_closer(Mat img, bool show = true) {
 }
 
 Mat apply_opening(Mat img, bool show = true) {
-  Mat kernel = Mat::ones(3, 3, img.type());
+  // Mat kernel = Mat::ones(3, 3, img.type());
+  Mat kernel = (Mat_(3, 3, CV_8SC1) << 1, 1, 1, 1, -8, 1, 1, 1, 1);
   Point anchor(-1, -1);
   int iteration_number = 3;
   return apply_filter(img, show, &morphologyEx, MORPH_OPEN, kernel, anchor,
@@ -71,6 +71,45 @@ Mat apply_custom(Mat img, bool show = true) {
   return apply_filter(second_stage, show, &dilate, kernel, anchor,
                       iteratioin_number, BORDER_CONSTANT,
                       morphologyDefaultBorderValue());
+}
+
+Mat apply_fillter2d(Mat img, bool show = true) {
+  Mat kernel = Mat::ones(3, 3, CV_32F) / 9.F;
+  Point anchor(-1, -1);
+  return apply_filter(img, show, &filter2D, img.type(), kernel, anchor, 0,
+                      BORDER_DEFAULT);
+}
+
+Mat apply_blur(Mat img, bool show = true) {
+  Size size(3, 3);
+  Point anchor(-1, -1);
+  return apply_filter(img, show, &blur, img.type(), size, anchor,
+                      BORDER_DEFAULT);
+}
+
+Mat apply_box_filter(Mat img, bool show = true) {
+  Size size(3, 3);
+  Point anchor(-1, -1);
+  return apply_filter(img, show, &boxFilter, -1, size, anchor, true,
+                      BORDER_DEFAULT);
+}
+
+Mat apply_bilateral_filter(Mat img, bool show = true) {
+  int d = 7;
+  int sigma_c = 14;
+  int sigma_s = 3;
+  return apply_filter(img, show, &bilateralFilter, d, sigma_c, sigma_s,
+                      BORDER_DEFAULT);
+}
+
+Mat apply_gaussian_blur(Mat img, bool show = true) {
+  Size size(3, 3);
+  return apply_filter(img, show, &GaussianBlur, size, 0, 0, BORDER_DEFAULT);
+}
+
+Mat apply_median_blur(Mat img, bool show = true) {
+  int size = 3;
+  return apply_filter(img, show, &medianBlur, size);
 }
 
 std::string generate_time_string() {
@@ -121,17 +160,22 @@ Mat cvt_non_white_to_black(Mat img, bool show = true) {
 }
 
 template <class F>
-void filter_img(Mat img, std::string folder, std::string name, F func,
+void filter_img(Mat img, std::string folder, std::string save_name, F func,
                 bool show = true) {
   Mat f_img = func(img, show);
   Mat e_f_img = detect_edges(f_img, show);
   Mat bw_f_img = cvt_non_white_to_black(f_img, show);
   Mat e_bw_f_img = detect_edges(bw_f_img, show);
+  Mat otsu_f_img;
+  threshold(f_img, otsu_f_img, 0, 255, THRESH_BINARY | THRESH_OTSU);
+  Mat e_otsu_f_img = detect_edges(bw_f_img, show);
 
-  save_image(f_img, folder, name);
-  save_image(e_f_img, folder, name + "-edges");
-  save_image(bw_f_img, folder, name + "-bw");
-  save_image(e_bw_f_img, folder, name + "-bw-edges");
+  save_image(f_img, folder, save_name);
+  save_image(e_f_img, folder, save_name + "-edges");
+  save_image(bw_f_img, folder, save_name + "-bw");
+  save_image(e_bw_f_img, folder, save_name + "-bw-edges");
+  save_image(otsu_f_img, folder, save_name + "-otsu");
+  save_image(e_otsu_f_img, folder, save_name + "-otsu-edges");
 }
 
 int main() {
@@ -147,23 +191,21 @@ int main() {
   cvtColor(img, gray_img, COLOR_RGB2GRAY);
 
   std::string folder = make_save_folder();
+  Mat thr;
+  threshold(gray_img, thr, 0, 255, THRESH_BINARY | THRESH_OTSU);
+  save_image(thr, folder, "otsu");
   save_image(detect_edges(gray_img, show_images), folder, "orignal-edges");
-  filter_img(gray_img, folder, "cl", &apply_closer, show_images);
-  filter_img(gray_img, folder, "op", &apply_opening, show_images);
+  filter_img(gray_img, folder, "closer", &apply_closer, show_images);
+  filter_img(gray_img, folder, "opening", &apply_opening, show_images);
   filter_img(gray_img, folder, "custom", &apply_custom, show_images);
-  // std::array filtered_images = {
-  //  apply_filter(gray_img, true, &filter2D, gray_img.type(), Mat::ones(3,
-  //  3, CV_32F) / static_cast<float>(9), Point(-1, -1), 0, BORDER_DEFAULT),
-  //  apply_filter(gray_img, true, &blur, Size(3, 3), Point(-1, -1),
-  //  BORDER_DEFAULT),
-  //  apply_filter(gray_img, true, &boxFilter, gray_img.type(), Size(3, 3),
-  //  Point(-1, -1), true, BORDER_DEFAULT),
-  //  apply_filter(gray_img, true, &bilateralFilter, 9, 50, 50,
-  //  BORDER_DEFAULT),
-  //  apply_filter(gray_img, true, &GaussianBlur, cv::Size(3, 3), 0, 0,
-  //  BORDER_DEFAULT),
-  //  apply_filter(gray_img, true, &medianBlur, 3),
-  //  apply_closer(gray_img),
-  //  apply_opening(gray_img),
-  //};
+  filter_img(gray_img, folder, "dilate", &apply_dilate, show_images);
+  filter_img(gray_img, folder, "erode", &apply_erode, show_images);
+  filter_img(gray_img, folder, "filter2d", &apply_fillter2d, show_images);
+  filter_img(gray_img, folder, "blur", &apply_blur, show_images);
+  filter_img(gray_img, folder, "box_filter", &apply_box_filter, show_images);
+  filter_img(gray_img, folder, "bilateral_filter", &apply_bilateral_filter,
+             show_images);
+  filter_img(gray_img, folder, "gaussian_blur", &apply_gaussian_blur,
+             show_images);
+  filter_img(gray_img, folder, "median_blur", &apply_median_blur, show_images);
 }
