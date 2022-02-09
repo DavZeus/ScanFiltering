@@ -83,8 +83,7 @@ Mat apply_fillter2d(Mat img, bool show = true) {
 Mat apply_blur(Mat img, bool show = true) {
   Size size(3, 3);
   Point anchor(-1, -1);
-  return apply_filter(img, show, &blur, img.type(), size, anchor,
-                      BORDER_DEFAULT);
+  return apply_filter(img, show, &blur, size, anchor, BORDER_DEFAULT);
 }
 
 Mat apply_box_filter(Mat img, bool show = true) {
