@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <functional>
+#include <numeric>
 #include <opencv2/opencv.hpp>
 
 using namespace cv;
@@ -158,6 +159,28 @@ Mat cvt_non_white_to_black(Mat img, bool show = true) {
   return bw_img;
 }
 
+void avg(Mat img, std::string folder, std::string save_name) {
+  std::vector<int> points(img.rows);
+  for (int i = 0; i < img.rows; ++i) {
+    Mat_<uchar> row = img.row(i);
+    auto first = std::find(row.begin(), row.end(), 255);
+    auto last = std::find(row.rbegin(), row.rend(), 255);
+    if (first != row.end() && last != row.rend()) {
+      points.emplace_back(
+          (first.pos() + (last.base().pos() - first.pos()) / 2).x);
+    }
+  }
+  if (!points.empty()) {
+    int average =
+        std::accumulate(points.begin(), points.end(), 0) / points.size();
+    std::vector<int> deviation(points.size());
+    for (auto p : points) {
+      deviation.emplace_back(std::abs(p - average));
+    }
+    std::max
+  }
+}
+
 template <class F>
 void filter_img(Mat img, std::string folder, std::string save_name, F func,
                 bool show = true) {
@@ -170,41 +193,44 @@ void filter_img(Mat img, std::string folder, std::string save_name, F func,
   Mat e_otsu_f_img = detect_edges(bw_f_img, show);
 
   save_image(f_img, folder, save_name);
-  save_image(e_f_img, folder, save_name + "-edges");
-  save_image(bw_f_img, folder, save_name + "-bw");
-  save_image(e_bw_f_img, folder, save_name + "-bw-edges");
-  save_image(otsu_f_img, folder, save_name + "-otsu");
-  save_image(e_otsu_f_img, folder, save_name + "-otsu-edges");
+  save_image(e_f_img, folder, save_name + "_edges");
+  save_image(bw_f_img, folder, save_name + "_bw");
+  save_image(e_bw_f_img, folder, save_name + "_bw_edges");
+  save_image(otsu_f_img, folder, save_name + "_otsu");
+  save_image(e_otsu_f_img, folder, save_name + "_otsu_edges");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   using namespace cv;
   const bool show_images = false;
+
+  if (argc < 2) {
+    fmt::print("Not enough arguments. File path is needed\n");
+    return EXIT_FAILURE;
+  }
 
   if (show_images) {
     namedWindow(window_name.data(), WindowFlags::WINDOW_KEEPRATIO);
   }
 
-  Mat img = imread("20k_edge.bmp");
-  Mat gray_img;
-  cvtColor(img, gray_img, COLOR_RGB2GRAY);
+  Mat img;
+  cvtColor(imread(argv[1]), img, COLOR_RGB2GRAY);
 
   std::string folder = make_save_folder();
   Mat thr;
-  threshold(gray_img, thr, 0, 255, THRESH_BINARY | THRESH_OTSU);
+  threshold(img, thr, 0, 255, THRESH_BINARY | THRESH_OTSU);
   save_image(thr, folder, "otsu");
-  save_image(detect_edges(gray_img, show_images), folder, "orignal-edges");
-  filter_img(gray_img, folder, "closer", &apply_closer, show_images);
-  filter_img(gray_img, folder, "opening", &apply_opening, show_images);
-  filter_img(gray_img, folder, "custom", &apply_custom, show_images);
-  filter_img(gray_img, folder, "dilate", &apply_dilate, show_images);
-  filter_img(gray_img, folder, "erode", &apply_erode, show_images);
-  filter_img(gray_img, folder, "filter2d", &apply_fillter2d, show_images);
-  filter_img(gray_img, folder, "blur", &apply_blur, show_images);
-  filter_img(gray_img, folder, "box_filter", &apply_box_filter, show_images);
-  filter_img(gray_img, folder, "bilateral_filter", &apply_bilateral_filter,
+  save_image(detect_edges(img, show_images), folder, "orignal_edges");
+  filter_img(img, folder, "closer", &apply_closer, show_images);
+  filter_img(img, folder, "opening", &apply_opening, show_images);
+  filter_img(img, folder, "custom", &apply_custom, show_images);
+  filter_img(img, folder, "dilate", &apply_dilate, show_images);
+  filter_img(img, folder, "erode", &apply_erode, show_images);
+  filter_img(img, folder, "filter2d", &apply_fillter2d, show_images);
+  filter_img(img, folder, "blur", &apply_blur, show_images);
+  filter_img(img, folder, "box_filter", &apply_box_filter, show_images);
+  filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter,
              show_images);
-  filter_img(gray_img, folder, "gaussian_blur", &apply_gaussian_blur,
-             show_images);
-  filter_img(gray_img, folder, "median_blur", &apply_median_blur, show_images);
+  filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur, show_images);
+  filter_img(img, folder, "median_blur", &apply_median_blur, show_images);
 }
