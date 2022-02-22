@@ -5,7 +5,7 @@
 #include <map>
 #include <numeric>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
@@ -16,105 +16,96 @@ using namespace cv;
 const std::string_view window_name = "1";
 const std::string_view data_filename = "big_data.csv";
 
-void show_image(Mat img) {
-  imshow(window_name.data(), img);
-  waitKey(0);
-}
-
 template <class F, class... Args>
-Mat apply_filter(Mat img, bool show, F func, Args... args) {
+Mat apply_filter(Mat img, F func, Args... args) {
   Mat filtered_img;
   std::invoke(func, img, filtered_img, std::forward<Args>(args)...);
-  if (show)
-    show_image(filtered_img);
   return filtered_img;
 }
 
-Mat apply_dilate(Mat img, bool show = true) {
+Mat apply_dilate(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
-  return apply_filter(img, show, &dilate, kernel, anchor, iteration_number,
+  return apply_filter(img, dilate, kernel, anchor, iteration_number,
                       BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
-Mat apply_erode(Mat img, bool show = true) {
+Mat apply_erode(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
-  return apply_filter(img, show, &erode, kernel, anchor, iteration_number,
+  return apply_filter(img, &erode, kernel, anchor, iteration_number,
                       BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
-Mat apply_closer(Mat img, bool show = true) {
+Mat apply_closer(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
-  return apply_filter(img, show, &morphologyEx, MORPH_CLOSE, kernel, anchor,
+  return apply_filter(img, &morphologyEx, MORPH_CLOSE, kernel, anchor,
                       iteration_number, BORDER_CONSTANT,
                       morphologyDefaultBorderValue());
 }
 
-Mat apply_opening(Mat img, bool show = true) {
+Mat apply_opening(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
-  return apply_filter(img, show, &morphologyEx, MORPH_OPEN, kernel, anchor,
+  return apply_filter(img, &morphologyEx, MORPH_OPEN, kernel, anchor,
                       iteration_number, BORDER_CONSTANT,
                       morphologyDefaultBorderValue());
 }
 
-Mat apply_custom(Mat img, bool show = true) {
+Mat apply_custom(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteratioin_number = 1;
   Mat first_stage =
-      apply_filter(img, show, &dilate, kernel, anchor, iteratioin_number,
+      apply_filter(img, &dilate, kernel, anchor, iteratioin_number,
                    BORDER_CONSTANT, morphologyDefaultBorderValue());
   Mat second_stage =
-      apply_filter(first_stage, show, &erode, kernel, anchor, 2,
-                   BORDER_CONSTANT, morphologyDefaultBorderValue());
-  return apply_filter(second_stage, show, &dilate, kernel, anchor,
-                      iteratioin_number, BORDER_CONSTANT,
-                      morphologyDefaultBorderValue());
+      apply_filter(first_stage, &erode, kernel, anchor, 2, BORDER_CONSTANT,
+                   morphologyDefaultBorderValue());
+  return apply_filter(second_stage, &dilate, kernel, anchor, iteratioin_number,
+                      BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
-Mat apply_fillter2d(Mat img, bool show = true) {
+Mat apply_fillter2d(Mat img) {
   Mat kernel = Mat::ones(3, 3, CV_32F) / 9.F;
   Point anchor(-1, -1);
-  return apply_filter(img, show, &filter2D, img.type(), kernel, anchor, 0,
+  return apply_filter(img, &filter2D, img.type(), kernel, anchor, 0,
                       BORDER_DEFAULT);
 }
 
-Mat apply_blur(Mat img, bool show = true) {
+Mat apply_blur(Mat img) {
   Size size(3, 3);
   Point anchor(-1, -1);
-  return apply_filter(img, show, &blur, size, anchor, BORDER_DEFAULT);
+  return apply_filter(img, &blur, size, anchor, BORDER_DEFAULT);
 }
 
-Mat apply_box_filter(Mat img, bool show = true) {
+Mat apply_box_filter(Mat img) {
   Size size(3, 3);
   Point anchor(-1, -1);
-  return apply_filter(img, show, &boxFilter, -1, size, anchor, true,
-                      BORDER_DEFAULT);
+  return apply_filter(img, &boxFilter, -1, size, anchor, true, BORDER_DEFAULT);
 }
 
-Mat apply_bilateral_filter(Mat img, bool show = true) {
+Mat apply_bilateral_filter(Mat img) {
   int d = 7;
   int sigma_c = 14;
   int sigma_s = 3;
-  return apply_filter(img, show, &bilateralFilter, d, sigma_c, sigma_s,
+  return apply_filter(img, &bilateralFilter, d, sigma_c, sigma_s,
                       BORDER_DEFAULT);
 }
 
-Mat apply_gaussian_blur(Mat img, bool show = true) {
+Mat apply_gaussian_blur(Mat img) {
   Size size(3, 3);
-  return apply_filter(img, show, &GaussianBlur, size, 0, 0, BORDER_DEFAULT);
+  return apply_filter(img, &GaussianBlur, size, 0, 0, BORDER_DEFAULT);
 }
 
-Mat apply_median_blur(Mat img, bool show = true) {
+Mat apply_median_blur(Mat img) {
   int size = 3;
-  return apply_filter(img, show, &medianBlur, size);
+  return apply_filter(img, &medianBlur, size);
 }
 
 std::string generate_time_string() {
@@ -143,28 +134,24 @@ void save_image(Mat img, const std::string &path, const std::string &filename) {
   imwrite(fullname.string(), img);
 }
 
-Mat detect_edges(Mat img, bool show = true) {
+Mat detect_edges(Mat img) {
   Mat edges;
   const double low_threshold = 254;
   const double high_threshhold = 255;
   Canny(img, edges, low_threshold, high_threshhold, 3);
-  if (show)
-    show_image(edges);
   return edges;
 }
 
-Mat cvt_to_bw(Mat img, bool show = true) {
+Mat cvt_to_bw(Mat img) {
   Mat bw_img = img.clone();
   bw_img.forEach<uint8_t>([](uint8_t &p, const int *pos) {
     if (p != 255)
       p = 0;
   });
-  if (show)
-    show_image(bw_img);
   return bw_img;
 }
 
-std::vector<Point> find_line_points(Mat img) {
+auto find_line_points(Mat img) {
   std::vector<Point> line_points;
   line_points.reserve(img.cols);
   for (int i = 0; i < img.cols; ++i) {
@@ -198,76 +185,60 @@ void draw_line(Mat img, const std::string &folder, const std::string &save_name,
 }
 
 auto form_data(const std::vector<Point> &line_points) {
-  const int average_point =
+  const float average_point =
       std::reduce(line_points.begin(), line_points.end()).y /
-      static_cast<int>(line_points.size());
-  std::vector<int> deviation;
+      static_cast<float>(line_points.size());
+  std::vector<float> deviation;
   deviation.reserve(line_points.size());
   for (auto p : line_points) {
     deviation.emplace_back(std::abs(p.y - average_point));
   }
-  const int max_deviation =
+  const float max_deviation =
       *std::max_element(deviation.begin(), deviation.end());
-  const int average_deviation =
-      std::reduce(deviation.begin(), deviation.end()) /
-      static_cast<int>(deviation.size());
-  std::map<std::string, int> data;
+  const float average_deviation =
+      std::reduce(deviation.begin(), deviation.end()) / deviation.size();
+  std::map<std::string, float> data;
   data.emplace(STR(average_point), average_point);
   data.emplace(STR(max_deviation), max_deviation);
   data.emplace(STR(average_deviation), average_deviation);
   return data;
 }
 
-void write_data(const std::string &folder, std::map<std::string, int> data) {
+void write_data(const std::string &folder, const std::string &name,
+                std::map<std::string, float> data) {
   std::filesystem::path full_path(folder);
   full_path /= data_filename;
-  std::ofstream f(full_path, std::ios::ate);
+  std::ofstream f(full_path, std::ios::app);
   if (!f) {
     fmt::print("Can not open data file\n");
     return;
   }
   f.imbue(std::locale("ru_RU.UTF-8"));
-  for (const auto &[key, value] : data) {
-    f << key << ": " << value << ';';
-  }
-  f << '\n';
+  f << std::setprecision(2) << name << ';' << data.at("average_point") << ';'
+    << data.at("max_deviation") << ';' << data.at("average_deviation") << '\n';
 }
 
-// TODO: Rewrite to use map instead of vector
-void make_data(Mat img, const std::string &folder,
+auto make_data(Mat img, const std::string &folder,
                const std::string &save_name) {
-  const std::vector<Point> line_points = find_line_points(img);
-  if (line_points.empty()) {
-    fmt::print("No points found in {}\n", save_name);
-    return;
-  }
+  auto line_points = find_line_points(img);
   write_data(folder, save_name, form_data(line_points));
-  draw_line(img, folder, save_name, line_points);
+  return line_points;
 }
 
 template <class F>
-void filter_img(Mat img, std::string folder, std::string save_name, F func,
-                bool show = true) {
-  Mat bw_img = cvt_to_bw(img, show);
-  Mat f_img = func(img, show);
-  Mat e_f_img = detect_edges(f_img, show);
-  Mat bw_f_img = cvt_to_bw(f_img, show);
-  Mat e_bw_f_img = detect_edges(bw_f_img, show);
-  // Mat otsu_f_img;
-  // threshold(f_img, otsu_f_img, 0, 255, THRESH_BINARY | THRESH_OTSU);
-  // Mat e_otsu_f_img = detect_edges(bw_f_img, show);
+void filter_img(Mat img, std::string folder, std::string save_name, F func) {
+  Mat f_img = std::invoke(func, img);
+  Mat e_f_img = detect_edges(f_img);
+  Mat bw_f_img = cvt_to_bw(f_img);
+  Mat e_bw_f_img = detect_edges(bw_f_img);
 
-  save_image(bw_img, folder, save_name + _STR(bw_img));
   save_image(f_img, folder, save_name + _STR(f_img));
   save_image(e_f_img, folder, save_name + _STR(e_f_img));
   save_image(bw_f_img, folder, save_name + _STR(bw_f_img));
   save_image(e_bw_f_img, folder, save_name + _STR(e_bw_f_img));
-  // save_image(otsu_f_img, folder, save_name + _STR(otsu_f_img));
-  // save_image(e_otsu_f_img, folder, save_name + _STR(e_otsu_f_img));
 
-  make_data(bw_img, folder, save_name + _STR(bw_img));
-  make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
-  // avg(otsu_f_img, folder, save_name + _STR(otsu_f_img));
+  auto line_points = make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
+  draw_line(img, folder, save_name, line_points);
 }
 
 void make_csv(const std::string &folder) {
@@ -277,17 +248,18 @@ void make_csv(const std::string &folder) {
   f << ";Average point;Max deviation;Average deviation\n";
 }
 
+void add_original_data(Mat img, const std::string &folder) {
+  Mat bw_img = cvt_to_bw(img);
+  const std::string name("original_bw");
+  save_image(bw_img, folder, name);
+  make_data(bw_img, folder, name);
+}
+
 int main(int argc, char *argv[]) {
-  using namespace cv;
-  const bool show_images = false;
 
   if (argc < 2) {
     fmt::print("Not enough arguments. File path is needed\n");
     return EXIT_FAILURE;
-  }
-
-  if (show_images) {
-    namedWindow(window_name.data(), WindowFlags::WINDOW_KEEPRATIO);
   }
 
   Mat img;
@@ -295,20 +267,20 @@ int main(int argc, char *argv[]) {
 
   std::string folder = make_save_folder();
   make_csv(folder);
+  add_original_data(img, folder);
   Mat thr;
   threshold(img, thr, 0, 255, THRESH_BINARY | THRESH_OTSU);
   save_image(thr, folder, "otsu");
-  save_image(detect_edges(img, show_images), folder, "orignal_edges");
-  filter_img(img, folder, "closer", &apply_closer, show_images);
-  filter_img(img, folder, "opening", &apply_opening, show_images);
-  filter_img(img, folder, "custom", &apply_custom, show_images);
-  filter_img(img, folder, "dilate", &apply_dilate, show_images);
-  filter_img(img, folder, "erode", &apply_erode, show_images);
-  filter_img(img, folder, "filter2d", &apply_fillter2d, show_images);
-  filter_img(img, folder, "blur", &apply_blur, show_images);
-  filter_img(img, folder, "box_filter", &apply_box_filter, show_images);
-  filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter,
-             show_images);
-  filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur, show_images);
-  filter_img(img, folder, "median_blur", &apply_median_blur, show_images);
+  save_image(detect_edges(img), folder, "orignal_edges");
+  filter_img(img, folder, "closer", &apply_closer);
+  filter_img(img, folder, "opening", &apply_opening);
+  filter_img(img, folder, "custom", &apply_custom);
+  filter_img(img, folder, "dilate", &apply_dilate);
+  filter_img(img, folder, "erode", &apply_erode);
+  filter_img(img, folder, "filter2d", &apply_fillter2d);
+  filter_img(img, folder, "blur", &apply_blur);
+  filter_img(img, folder, "box_filter", &apply_box_filter);
+  filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter);
+  filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur);
+  filter_img(img, folder, "median_blur", &apply_median_blur);
 }
