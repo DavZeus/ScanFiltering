@@ -163,11 +163,8 @@ void draw_line(Mat img, const std::string &folder, const std::string &save_name,
   for (auto p1 = points.begin(), p2 = points.begin() + 1; p2 != points.end();
        ++p1, ++p2) {
     line(img_with_line, *p1, *p2, {0, 0, 255});
+    line(img_with_line, *p1, *p1, {255, 0, 0});
   }
-  // To draw only points
-  // for (const auto &p : points) {
-  //  line(img_with_line, p, p, {0, 0, 255});
-  // }
   save_image(img_with_line, folder, save_name + "_line");
 }
 
