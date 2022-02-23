@@ -71,23 +71,10 @@ Mat apply_custom(Mat img) {
                       BORDER_CONSTANT, morphologyDefaultBorderValue());
 }
 
-Mat apply_fillter2d(Mat img) {
-  Mat kernel = Mat::ones(3, 3, CV_32F) / 9.F;
-  Point anchor(-1, -1);
-  return apply_filter(img, &filter2D, img.type(), kernel, anchor, 0,
-                      BORDER_DEFAULT);
-}
-
 Mat apply_blur(Mat img) {
   Size size(3, 3);
   Point anchor(-1, -1);
   return apply_filter(img, &blur, size, anchor, BORDER_DEFAULT);
-}
-
-Mat apply_box_filter(Mat img) {
-  Size size(3, 3);
-  Point anchor(-1, -1);
-  return apply_filter(img, &boxFilter, -1, size, anchor, true, BORDER_DEFAULT);
 }
 
 Mat apply_bilateral_filter(Mat img) {
@@ -214,8 +201,9 @@ void write_data(const std::string &folder, const std::string &name,
     return;
   }
   f.imbue(std::locale("ru_RU.UTF-8"));
-  f << std::setprecision(2) << name << ';' << data.at("average_point") << ';'
-    << data.at("max_deviation") << ';' << data.at("average_deviation") << '\n';
+  f << std::fixed << std::setprecision(2) << name << ';'
+    << data.at("average_point") << ';' << data.at("average_deviation") << ';'
+    << data.at("max_deviation") << '\n';
 }
 
 auto make_data(Mat img, const std::string &folder,
@@ -277,9 +265,7 @@ int main(int argc, char *argv[]) {
   filter_img(img, folder, "custom", &apply_custom);
   filter_img(img, folder, "dilate", &apply_dilate);
   filter_img(img, folder, "erode", &apply_erode);
-  filter_img(img, folder, "filter2d", &apply_fillter2d);
   filter_img(img, folder, "blur", &apply_blur);
-  filter_img(img, folder, "box_filter", &apply_box_filter);
   filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter);
   filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur);
   filter_img(img, folder, "median_blur", &apply_median_blur);
