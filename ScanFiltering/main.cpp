@@ -154,7 +154,7 @@ auto find_line_points(Mat img) {
 }
 
 void draw_line(Mat img, const std::string &folder, const std::string &save_name,
-               std::vector<Point> points) {
+               const std::vector<Point> &points) {
   if (points.empty()) {
     return;
   }
@@ -225,7 +225,8 @@ void filter_img(Mat img, std::string folder, std::string save_name, F func) {
   save_image(bw_f_img, folder, save_name + _STR(bw_f_img));
   save_image(e_bw_f_img, folder, save_name + _STR(e_bw_f_img));
 
-  auto line_points = make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
+  const auto line_points =
+      make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
   draw_line(img, folder, save_name, line_points);
 }
 
@@ -240,7 +241,8 @@ void add_original_data(Mat img, const std::string &folder) {
   Mat bw_img = cvt_to_bw(img);
   const std::string name("original_bw");
   save_image(bw_img, folder, name);
-  make_data(bw_img, folder, name);
+  const auto line_points = make_data(bw_img, folder, name);
+  draw_line(img, folder, "original", line_points);
 }
 
 int main(int argc, char *argv[]) {
@@ -256,9 +258,6 @@ int main(int argc, char *argv[]) {
   std::string folder = make_save_folder();
   make_csv(folder);
   add_original_data(img, folder);
-  Mat thr;
-  threshold(img, thr, 0, 255, THRESH_BINARY | THRESH_OTSU);
-  save_image(thr, folder, "otsu");
   save_image(detect_edges(img), folder, "orignal_edges");
   filter_img(img, folder, "closer", &apply_closer);
   filter_img(img, folder, "opening", &apply_opening);
