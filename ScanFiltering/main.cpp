@@ -57,18 +57,35 @@ Mat apply_opening(Mat img) {
                       morphologyDefaultBorderValue());
 }
 
-Mat apply_custom(Mat img) {
+Mat apply_custom_closer(Mat img) {
   Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteratioin_number = 1;
-  Mat first_stage =
-      apply_filter(img, &dilate, kernel, anchor, iteratioin_number,
-                   BORDER_CONSTANT, morphologyDefaultBorderValue());
-  Mat second_stage =
-      apply_filter(first_stage, &erode, kernel, anchor, 2, BORDER_CONSTANT,
-                   morphologyDefaultBorderValue());
-  return apply_filter(second_stage, &dilate, kernel, anchor, iteratioin_number,
-                      BORDER_CONSTANT, morphologyDefaultBorderValue());
+  int custom_iteration = 3;
+  while (custom_iteration--) {
+    Mat iteration_img =
+        apply_filter(img, &dilate, kernel, anchor, iteratioin_number,
+                     BORDER_CONSTANT, morphologyDefaultBorderValue());
+    img = apply_filter(iteration_img, &erode, kernel, anchor, iteratioin_number,
+                       BORDER_CONSTANT, morphologyDefaultBorderValue());
+  }
+  return img;
+}
+
+Mat apply_custom_opening(Mat img) {
+  Mat kernel = Mat::ones(3, 3, img.type());
+  Point anchor(-1, -1);
+  int iteratioin_number = 1;
+  int custom_iteration = 3;
+  while (custom_iteration--) {
+    Mat iteration_img =
+        apply_filter(img, &erode, kernel, anchor, iteratioin_number,
+                     BORDER_CONSTANT, morphologyDefaultBorderValue());
+    img =
+        apply_filter(iteration_img, &dilate, kernel, anchor, iteratioin_number,
+                     BORDER_CONSTANT, morphologyDefaultBorderValue());
+  }
+  return img;
 }
 
 Mat apply_blur(Mat img) {
@@ -144,10 +161,10 @@ auto find_line_points(Mat img) {
   for (int i = 0; i < img.cols; ++i) {
     Mat_<uchar> col = img.col(i);
     auto first = std::find(col.begin(), col.end(), 255);
+    if (first == col.end())
+      continue;
     auto last = std::find(col.rbegin(), col.rend(), 255);
-    if (first != col.end() && last != col.rend()) {
-      line_points.emplace_back(i, ((last.base().pos() + first.pos()) / 2).y);
-    }
+    line_points.emplace_back(i, ((last.base().pos() + first.pos()) / 2).y);
   }
   line_points.shrink_to_fit();
   return line_points;
@@ -258,7 +275,8 @@ int main(int argc, char *argv[]) {
   save_image(detect_edges(img), folder, "orignal_edges");
   filter_img(img, folder, "closer", &apply_closer);
   filter_img(img, folder, "opening", &apply_opening);
-  filter_img(img, folder, "custom", &apply_custom);
+  filter_img(img, folder, "custom_closer", &apply_custom_closer);
+  filter_img(img, folder, "custom_opening", &apply_custom_opening);
   filter_img(img, folder, "dilate", &apply_dilate);
   filter_img(img, folder, "erode", &apply_erode);
   filter_img(img, folder, "blur", &apply_blur);
