@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -7,6 +8,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <regex>
 #include <vector>
 
 #define _STR(x) "_" #x
@@ -16,6 +18,19 @@ using namespace cv;
 const std::string_view window_name = "1";
 const std::string_view data_filename = "big_data.csv";
 
+// Cross
+// Mat kernel = (Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
+// Cross
+// Mat kernel = (Mat_<uchar>(5, 5) << 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1,
+// 1,
+//              0, 0, 1, 0, 0, 0, 0, 1, 0, 0);
+// Elipse
+// Mat kernel = (Mat_<uchar>(5, 5) << 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+// 1,
+//              1, 1, 1, 1, 1, 0, 1, 1, 1, 0);
+// Square
+Mat kernel = Mat::ones(3, 3, CV_8UC1);
+
 template <class F, class... Args>
 Mat apply_filter(Mat img, F func, Args... args) {
   Mat filtered_img;
@@ -24,7 +39,6 @@ Mat apply_filter(Mat img, F func, Args... args) {
 }
 
 Mat apply_dilate(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
   return apply_filter(img, dilate, kernel, anchor, iteration_number,
@@ -32,7 +46,6 @@ Mat apply_dilate(Mat img) {
 }
 
 Mat apply_erode(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
   return apply_filter(img, &erode, kernel, anchor, iteration_number,
@@ -40,7 +53,6 @@ Mat apply_erode(Mat img) {
 }
 
 Mat apply_closer(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
   return apply_filter(img, &morphologyEx, MORPH_CLOSE, kernel, anchor,
@@ -49,7 +61,6 @@ Mat apply_closer(Mat img) {
 }
 
 Mat apply_opening(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteration_number = 3;
   return apply_filter(img, &morphologyEx, MORPH_OPEN, kernel, anchor,
@@ -58,7 +69,6 @@ Mat apply_opening(Mat img) {
 }
 
 Mat apply_custom_closer(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteratioin_number = 1;
   int custom_iteration = 3;
@@ -73,7 +83,6 @@ Mat apply_custom_closer(Mat img) {
 }
 
 Mat apply_custom_opening(Mat img) {
-  Mat kernel = Mat::ones(3, 3, img.type());
   Point anchor(-1, -1);
   int iteratioin_number = 1;
   int custom_iteration = 3;
@@ -214,10 +223,15 @@ void write_data(const std::string &folder, const std::string &name,
     fmt::print("Can not open data file\n");
     return;
   }
-  f.imbue(std::locale("ru_RU.UTF-8"));
-  f << std::fixed << std::setprecision(2) << name << ';'
-    << data.at("average_point") << ';' << data.at("average_deviation") << ';'
-    << data.at("max_deviation") << '\n';
+  // f.imbue(std::locale("ru_RU.UTF-8"));
+  // f << std::fixed << std::setprecision(2) << name << ';'
+  //   << data.at("average_point") << ';' << data.at("average_deviation") << ';'
+  //   << data.at("max_deviation") << '\n';
+  std::string r =
+      fmt::format(std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n",
+                  name, data.at("average_point"), data.at("average_deviation"),
+                  data.at("max_deviation"));
+  f << std::regex_replace(r, std::regex{"Â"}, "");
 }
 
 auto make_data(Mat img, const std::string &folder,
@@ -248,7 +262,7 @@ void make_csv(const std::string &folder) {
   std::filesystem::path fullpath(folder);
   fullpath /= data_filename.data();
   std::ofstream f(fullpath);
-  f << ";Average point;Max deviation;Average deviation\n";
+  f << ";Average point;Average deviation;Max deviation\n";
 }
 
 void add_original_data(Mat img, const std::string &folder) {

@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # Folders with filtered images
 [2]*/
+*.csv
