@@ -181,22 +181,39 @@ auto find_line_points(Mat img) {
   return line_points;
 }
 
-Mat draw_line(Mat img, const std::string &folder, const std::string &save_name,
-              const std::vector<Point> &points) {
+Mat draw_line(Mat img, const std::vector<Point> &points,
+              Scalar line_colour = {0, 0, 255}) {
   if (points.empty()) {
-    Mat();
+    return Mat();
   }
   Mat img_with_line;
-  cvtColor(img, img_with_line, COLOR_GRAY2BGR);
+  if (img.type() == CV_8UC1) {
+    cvtColor(img, img_with_line, COLOR_GRAY2BGR);
+  } else {
+    img_with_line = img;
+  }
   for (auto p1 = points.begin(), p2 = points.begin() + 1; p2 != points.end();
        ++p1, ++p2) {
-    line(img_with_line, *p1, *p2, {0, 0, 255});
-    line(img_with_line, *p1, *p1, {255, 0, 0});
+    line(img_with_line, *p1, *p2, line_colour);
   }
-  save_image(img_with_line, folder, save_name + "_line");
   return img_with_line;
 }
-
+Mat draw_points(Mat img, const std::vector<Point> &points,
+                Scalar point_colour = {255, 0, 0}) {
+  if (points.empty()) {
+    return Mat();
+  }
+  Mat img_with_line;
+  if (img.type() == CV_8UC1) {
+    cvtColor(img, img_with_line, COLOR_GRAY2BGR);
+  } else {
+    img_with_line = img;
+  }
+  for (auto p1 = points.begin(); p1 != points.end(); ++p1) {
+    line(img_with_line, *p1, *p1, {255, 0, 0});
+  }
+  return img_with_line;
+}
 auto form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(line_points.begin(), line_points.end()).y /
@@ -226,10 +243,6 @@ void write_data(const std::string &folder, const std::string &name,
     fmt::print("Can not open data file\n");
     return;
   }
-  // f.imbue(std::locale("ru_RU.UTF-8"));
-  // f << std::fixed << std::setprecision(2) << name << ';'
-  //   << data.at("average_point") << ';' << data.at("average_deviation") << ';'
-  //   << data.at("max_deviation") << '\n';
   std::string r =
       fmt::format(std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n",
                   name, data.at("average_point"), data.at("average_deviation"),
@@ -244,8 +257,13 @@ auto make_data(Mat img, const std::string &folder,
   return line_points;
 }
 
+Mat crop_img(Mat img) {
+  return img(Range(img.rows / 4, img.rows / 4 * 3),
+             Range(img.cols / 4, img.cols / 4 * 3));
+}
+
 template <class F>
-void filter_img(Mat img, std::string folder, std::string save_name, F func) {
+auto filter_img(Mat img, std::string folder, std::string save_name, F func) {
   Mat f_img = std::invoke(func, img);
   Mat e_f_img = detect_edges(f_img);
   Mat bw_f_img = cvt_to_bw(f_img);
@@ -256,15 +274,15 @@ void filter_img(Mat img, std::string folder, std::string save_name, F func) {
   save_image(bw_f_img, folder, save_name + _STR(bw_f_img));
   save_image(e_bw_f_img, folder, save_name + _STR(e_bw_f_img));
 
-  const auto line_points =
-      make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
-  Mat img_with_line = draw_line(img, folder, save_name, line_points);
+  auto line_points = make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
+  Mat img_with_line = draw_line(img, line_points);
+  Mat img_with_line_and_points = draw_points(img_with_line, line_points);
 
-  Mat resized_img;
-  resized_img =
-      img_with_line(Range(img_with_line.rows / 4, img_with_line.rows / 4 * 3),
-                    Range(img_with_line.cols / 4, img_with_line.cols / 4 * 3));
-  save_image(resized_img, folder, save_name + "_resized");
+  save_image(img_with_line_and_points, folder, save_name + "_line");
+  save_image(crop_img(img_with_line_and_points), folder,
+             save_name + "_resized");
+
+  return line_points;
 }
 
 void make_csv(const std::string &folder) {
@@ -275,11 +293,14 @@ void make_csv(const std::string &folder) {
 }
 
 void add_original_data(Mat img, const std::string &folder) {
+  const std::string name = "original";
   Mat bw_img = cvt_to_bw(img);
-  const std::string name("original_bw");
-  save_image(bw_img, folder, name);
+  save_image(bw_img, folder, name + _STR(bw_img));
   const auto line_points = make_data(bw_img, folder, name);
-  draw_line(img, folder, "original", line_points);
+  Mat img_with_line = draw_line(img, line_points);
+  Mat img_with_line_and_points = draw_points(img_with_line, line_points);
+  save_image(img_with_line_and_points, folder, name + "_line");
+  save_image(crop_img(img_with_line_and_points), folder, name + "_resized");
 }
 
 int main(int argc, char *argv[]) {
@@ -296,12 +317,14 @@ int main(int argc, char *argv[]) {
   make_csv(folder);
   add_original_data(img, folder);
   save_image(detect_edges(img), folder, "orignal_edges");
+  Mat morph_img;
   filter_img(img, folder, "closer", &apply_closer);
   filter_img(img, folder, "opening", &apply_opening);
   filter_img(img, folder, "custom_closer", &apply_custom_closer);
   filter_img(img, folder, "custom_opening", &apply_custom_opening);
   filter_img(img, folder, "dilate", &apply_dilate);
   filter_img(img, folder, "erode", &apply_erode);
+  Mat blur_img;
   filter_img(img, folder, "blur", &apply_blur);
   filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter);
   filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur);
