@@ -142,6 +142,8 @@ std::string make_save_folder(std::string path = "") {
 }
 
 void save_image(Mat img, const std::string &path, const std::string &filename) {
+  if (img.empty())
+    return;
   std::filesystem::path fullname{path};
   fullname /= filename + ".png";
   imwrite(fullname.string(), img);
@@ -179,10 +181,10 @@ auto find_line_points(Mat img) {
   return line_points;
 }
 
-void draw_line(Mat img, const std::string &folder, const std::string &save_name,
-               const std::vector<Point> &points) {
+Mat draw_line(Mat img, const std::string &folder, const std::string &save_name,
+              const std::vector<Point> &points) {
   if (points.empty()) {
-    return;
+    Mat();
   }
   Mat img_with_line;
   cvtColor(img, img_with_line, COLOR_GRAY2BGR);
@@ -192,6 +194,7 @@ void draw_line(Mat img, const std::string &folder, const std::string &save_name,
     line(img_with_line, *p1, *p1, {255, 0, 0});
   }
   save_image(img_with_line, folder, save_name + "_line");
+  return img_with_line;
 }
 
 auto form_data(const std::vector<Point> &line_points) {
@@ -255,7 +258,13 @@ void filter_img(Mat img, std::string folder, std::string save_name, F func) {
 
   const auto line_points =
       make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
-  draw_line(img, folder, save_name, line_points);
+  Mat img_with_line = draw_line(img, folder, save_name, line_points);
+
+  Mat resized_img;
+  resized_img =
+      img_with_line(Range(img_with_line.rows / 4, img_with_line.rows / 4 * 3),
+                    Range(img_with_line.cols / 4, img_with_line.cols / 4 * 3));
+  save_image(resized_img, folder, save_name + "_resized");
 }
 
 void make_csv(const std::string &folder) {
