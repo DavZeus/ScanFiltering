@@ -181,38 +181,22 @@ auto find_line_points(Mat img) {
   return line_points;
 }
 
-Mat draw_line(Mat img, const std::vector<Point> &points,
-              Scalar line_colour = {0, 0, 255}) {
-  if (points.empty()) {
-    return Mat();
-  }
-  Mat img_with_line;
-  if (img.type() == CV_8UC1) {
-    cvtColor(img, img_with_line, COLOR_GRAY2BGR);
-  } else {
-    img_with_line = img;
-  }
+void draw_line(Mat img, const std::vector<Point> &points,
+               Scalar line_colour = {0, 0, 255}) {
+  if (img.type() != CV_8UC3 || points.empty())
+    return;
   for (auto p1 = points.begin(), p2 = points.begin() + 1; p2 != points.end();
        ++p1, ++p2) {
-    line(img_with_line, *p1, *p2, line_colour);
+    line(img, *p1, *p2, line_colour);
   }
-  return img_with_line;
 }
-Mat draw_points(Mat img, const std::vector<Point> &points,
-                Scalar point_colour = {255, 0, 0}) {
-  if (points.empty()) {
-    return Mat();
+void draw_points(Mat img, const std::vector<Point> &points,
+                 Scalar point_colour = {255, 0, 0}) {
+  if (img.type() != CV_8UC3)
+    return;
+  for (const auto &p : points) {
+    line(img, p, p, {255, 0, 0});
   }
-  Mat img_with_line;
-  if (img.type() == CV_8UC1) {
-    cvtColor(img, img_with_line, COLOR_GRAY2BGR);
-  } else {
-    img_with_line = img;
-  }
-  for (auto p1 = points.begin(); p1 != points.end(); ++p1) {
-    line(img_with_line, *p1, *p1, {255, 0, 0});
-  }
-  return img_with_line;
 }
 auto form_data(const std::vector<Point> &line_points) {
   const float average_point =
@@ -275,8 +259,10 @@ auto filter_img(Mat img, std::string folder, std::string save_name, F func) {
   save_image(e_bw_f_img, folder, save_name + _STR(e_bw_f_img));
 
   auto line_points = make_data(bw_f_img, folder, save_name + _STR(bw_f_img));
-  Mat img_with_line = draw_line(img, line_points);
-  Mat img_with_line_and_points = draw_points(img_with_line, line_points);
+  Mat img_with_line_and_points;
+  cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
+  draw_line(img_with_line_and_points, line_points);
+  draw_points(img_with_line_and_points, line_points);
 
   save_image(img_with_line_and_points, folder, save_name + "_line");
   save_image(crop_img(img_with_line_and_points), folder,
@@ -297,8 +283,10 @@ void add_original_data(Mat img, const std::string &folder) {
   Mat bw_img = cvt_to_bw(img);
   save_image(bw_img, folder, name + _STR(bw_img));
   const auto line_points = make_data(bw_img, folder, name);
-  Mat img_with_line = draw_line(img, line_points);
-  Mat img_with_line_and_points = draw_points(img_with_line, line_points);
+  Mat img_with_line_and_points;
+  cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
+  draw_line(img_with_line_and_points, line_points);
+  draw_points(img_with_line_and_points, line_points);
   save_image(img_with_line_and_points, folder, name + "_line");
   save_image(crop_img(img_with_line_and_points), folder, name + "_resized");
 }
@@ -310,23 +298,44 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  Mat original = imread(argv[1]);
   Mat img;
-  cvtColor(imread(argv[1]), img, COLOR_RGB2GRAY);
+  cvtColor(original, img, COLOR_RGB2GRAY);
 
   std::string folder = make_save_folder();
   make_csv(folder);
   add_original_data(img, folder);
   save_image(detect_edges(img), folder, "orignal_edges");
-  Mat morph_img;
-  filter_img(img, folder, "closer", &apply_closer);
-  filter_img(img, folder, "opening", &apply_opening);
-  filter_img(img, folder, "custom_closer", &apply_custom_closer);
-  filter_img(img, folder, "custom_opening", &apply_custom_opening);
-  filter_img(img, folder, "dilate", &apply_dilate);
-  filter_img(img, folder, "erode", &apply_erode);
-  Mat blur_img;
-  filter_img(img, folder, "blur", &apply_blur);
-  filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter);
-  filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur);
-  filter_img(img, folder, "median_blur", &apply_median_blur);
+
+  Mat graph_morph_img = original.clone();
+  draw_line(graph_morph_img, filter_img(img, folder, "dilate", &apply_dilate),
+            {0, 128, 128});
+  draw_line(graph_morph_img,
+            filter_img(img, folder, "custom_closer", &apply_custom_closer),
+            {255, 0, 0});
+  draw_line(graph_morph_img, filter_img(img, folder, "closer", &apply_closer),
+            {128, 0, 128});
+  draw_line(graph_morph_img,
+            filter_img(img, folder, "custom_opening", &apply_custom_opening),
+            {0, 255, 0});
+  draw_line(graph_morph_img, filter_img(img, folder, "erode", &apply_erode),
+            {128, 128, 0});
+  draw_line(graph_morph_img, filter_img(img, folder, "opening", &apply_opening),
+            {0, 0, 255});
+  save_image(crop_img(graph_morph_img), folder, STR(graph_morph_img));
+
+  Mat graph_blur_img = original.clone();
+  draw_line(
+      graph_blur_img,
+      filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter),
+      {0, 255, 0});
+  draw_line(graph_blur_img,
+            filter_img(img, folder, "median_blur", &apply_median_blur),
+            {255, 0, 0});
+  draw_line(graph_blur_img,
+            filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur),
+            {0, 255, 255});
+  draw_line(graph_blur_img, filter_img(img, folder, "blur", &apply_blur),
+            {0, 0, 255});
+  save_image(graph_blur_img, folder, STR(graph_blur_img));
 }
