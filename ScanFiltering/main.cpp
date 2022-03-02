@@ -309,17 +309,17 @@ int main(int argc, char *argv[]) {
 
   Mat graph_morph_img = original.clone();
   draw_line(graph_morph_img, filter_img(img, folder, "dilate", &apply_dilate),
-            {0, 128, 128});
+            {128, 128, 128});
   draw_line(graph_morph_img,
             filter_img(img, folder, "custom_closer", &apply_custom_closer),
-            {255, 0, 0});
+            {0, 255, 0});
   draw_line(graph_morph_img, filter_img(img, folder, "closer", &apply_closer),
-            {128, 0, 128});
+            {160, 0, 160});
   draw_line(graph_morph_img,
             filter_img(img, folder, "custom_opening", &apply_custom_opening),
-            {0, 255, 0});
+            {0, 255, 255});
   draw_line(graph_morph_img, filter_img(img, folder, "erode", &apply_erode),
-            {128, 128, 0});
+            {255, 0, 0});
   draw_line(graph_morph_img, filter_img(img, folder, "opening", &apply_opening),
             {0, 0, 255});
   save_image(crop_img(graph_morph_img), folder, STR(graph_morph_img));
