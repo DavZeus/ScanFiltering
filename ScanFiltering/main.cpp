@@ -309,17 +309,17 @@ int main(int argc, char *argv[]) {
 
   Mat graph_morph_img = original.clone();
   draw_line(graph_morph_img, filter_img(img, folder, "dilate", &apply_dilate),
-            {128, 128, 128});
+            {0, 128, 255});
   draw_line(graph_morph_img,
             filter_img(img, folder, "custom_closer", &apply_custom_closer),
-            {0, 255, 0});
+            {0, 234, 255});
   draw_line(graph_morph_img, filter_img(img, folder, "closer", &apply_closer),
-            {160, 0, 160});
+            {0, 128, 0});
   draw_line(graph_morph_img,
             filter_img(img, folder, "custom_opening", &apply_custom_opening),
-            {0, 255, 255});
-  draw_line(graph_morph_img, filter_img(img, folder, "erode", &apply_erode),
             {255, 0, 0});
+  draw_line(graph_morph_img, filter_img(img, folder, "erode", &apply_erode),
+            {179, 0, 179});
   draw_line(graph_morph_img, filter_img(img, folder, "opening", &apply_opening),
             {0, 0, 255});
   save_image(crop_img(graph_morph_img), folder, STR(graph_morph_img));
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
             {255, 0, 0});
   draw_line(graph_blur_img,
             filter_img(img, folder, "gaussian_blur", &apply_gaussian_blur),
-            {0, 255, 255});
+            {0, 234, 255});
   draw_line(graph_blur_img, filter_img(img, folder, "blur", &apply_blur),
             {0, 0, 255});
   save_image(graph_blur_img, folder, STR(graph_blur_img));
