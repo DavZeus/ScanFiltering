@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
   draw_line(
       graph_blur_img,
       filter_img(img, folder, "bilateral_filter", &apply_bilateral_filter),
-      {0, 255, 0});
+      {0, 128, 0});
   draw_line(graph_blur_img,
             filter_img(img, folder, "median_blur", &apply_median_blur),
             {255, 0, 0});
