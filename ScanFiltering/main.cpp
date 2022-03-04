@@ -242,8 +242,18 @@ auto make_data(Mat img, const std::string &folder,
 }
 
 Mat crop_img(Mat img) {
-  return img(Range(img.rows / 4, img.rows / 4 * 3),
-             Range(img.cols / 4, img.cols / 4 * 3));
+  constexpr float part = 0.2f;
+  constexpr float center_x = 0.5f;
+  constexpr float first_x = center_x - part;
+  constexpr float second_x = center_x + part;
+  constexpr float center_y = 0.53f;
+  constexpr float first_y = center_y - part;
+  constexpr float second_y = center_y + part;
+  const int x0 = static_cast<int>(img.rows * first_x);
+  const int x1 = static_cast<int>(img.rows * second_x);
+  const int y0 = static_cast<int>(img.cols * first_y);
+  const int y1 = static_cast<int>(img.cols * second_y);
+  return img(Range(x0, x1), Range(y0, y1));
 }
 
 template <class F>
@@ -262,8 +272,6 @@ auto filter_img(Mat img, std::string folder, std::string save_name, F func) {
   Mat img_with_line_and_points;
   cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
   draw_line(img_with_line_and_points, line_points);
-  draw_points(img_with_line_and_points, line_points);
-
   save_image(img_with_line_and_points, folder, save_name + "_line");
   save_image(crop_img(img_with_line_and_points), folder,
              save_name + "_resized");
@@ -286,7 +294,6 @@ void add_original_data(Mat img, const std::string &folder) {
   Mat img_with_line_and_points;
   cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
   draw_line(img_with_line_and_points, line_points);
-  draw_points(img_with_line_and_points, line_points);
   save_image(img_with_line_and_points, folder, name + "_line");
   save_image(crop_img(img_with_line_and_points), folder, name + "_resized");
 }
