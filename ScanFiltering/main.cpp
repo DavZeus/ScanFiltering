@@ -104,9 +104,9 @@ Mat apply_blur(Mat img) {
 }
 
 Mat apply_bilateral_filter(Mat img) {
-  int d = 7;
-  int sigma_c = 14;
-  int sigma_s = 3;
+  int d = 9;
+  int sigma_c = 5;
+  int sigma_s = 5;
   return apply_filter(img, &bilateralFilter, d, sigma_c, sigma_s,
                       BORDER_DEFAULT);
 }
@@ -241,19 +241,21 @@ auto make_data(Mat img, const std::string &folder,
   return line_points;
 }
 
-Mat crop_img(Mat img) {
-  constexpr float part = 0.2f;
-  constexpr float center_x = 0.5f;
-  constexpr float first_x = center_x - part;
-  constexpr float second_x = center_x + part;
-  constexpr float center_y = 0.53f;
-  constexpr float first_y = center_y - part;
-  constexpr float second_y = center_y + part;
-  const int x0 = static_cast<int>(img.rows * first_x);
-  const int x1 = static_cast<int>(img.rows * second_x);
-  const int y0 = static_cast<int>(img.cols * first_y);
-  const int y1 = static_cast<int>(img.cols * second_y);
+Mat crop_img(Mat img, const float center_x, const float part_x,
+             const float center_y, const float part_y) {
+  const float first_x = center_x - part_x;
+  const float second_x = center_x + part_x;
+  const float first_y = center_y - part_y;
+  const float second_y = center_y + part_y;
+  const int x0 = static_cast<int>(img.rows * first_y);
+  const int x1 = static_cast<int>(img.rows * second_y);
+  const int y0 = static_cast<int>(img.cols * first_x);
+  const int y1 = static_cast<int>(img.cols * second_x);
   return img(Range(x0, x1), Range(y0, y1));
+}
+
+Mat crop_img_common(Mat img) {
+  return crop_img(img, 0.535f, 0.195f, 0.5f, 0.14f);
 }
 
 template <class F>
@@ -273,7 +275,7 @@ auto filter_img(Mat img, std::string folder, std::string save_name, F func) {
   cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
   draw_line(img_with_line_and_points, line_points);
   save_image(img_with_line_and_points, folder, save_name + "_line");
-  save_image(crop_img(img_with_line_and_points), folder,
+  save_image(crop_img_common(img_with_line_and_points), folder,
              save_name + "_resized");
 
   return line_points;
@@ -286,33 +288,22 @@ void make_csv(const std::string &folder) {
   f << ";Average point;Average deviation;Max deviation\n";
 }
 
-void add_original_data(Mat img, const std::string &folder) {
+void add_original_data(Mat original, const std::string &folder) {
   const std::string name = "original";
-  Mat bw_img = cvt_to_bw(img);
+  Mat gray_img;
+  cvtColor(original, gray_img, COLOR_RGB2GRAY);
+  Mat bw_img = cvt_to_bw(gray_img);
   save_image(bw_img, folder, name + _STR(bw_img));
   const auto line_points = make_data(bw_img, folder, name);
-  Mat img_with_line_and_points;
-  cvtColor(img, img_with_line_and_points, COLOR_GRAY2BGR);
-  draw_line(img_with_line_and_points, line_points);
-  save_image(img_with_line_and_points, folder, name + "_line");
-  save_image(crop_img(img_with_line_and_points), folder, name + "_resized");
+  Mat img = original.clone();
+  draw_line(img, line_points);
+  save_image(img, folder, name + "_line");
+  save_image(crop_img_common(img), folder, name + "_resized");
 }
 
-int main(int argc, char *argv[]) {
-
-  if (argc < 2) {
-    fmt::print("Not enough arguments. File path is needed\n");
-    return EXIT_FAILURE;
-  }
-
-  Mat original = imread(argv[1]);
+void make_morphological(Mat original, const std::string &folder) {
   Mat img;
   cvtColor(original, img, COLOR_RGB2GRAY);
-
-  std::string folder = make_save_folder();
-  make_csv(folder);
-  add_original_data(img, folder);
-  save_image(detect_edges(img), folder, "orignal_edges");
 
   Mat graph_morph_img = original.clone();
   draw_line(graph_morph_img, filter_img(img, folder, "dilate", &apply_dilate),
@@ -329,7 +320,14 @@ int main(int argc, char *argv[]) {
             {179, 0, 179});
   draw_line(graph_morph_img, filter_img(img, folder, "opening", &apply_opening),
             {0, 0, 255});
-  save_image(crop_img(graph_morph_img), folder, STR(graph_morph_img));
+
+  save_image(crop_img(graph_morph_img, 0.535f, 0.05f, 0.5f, 0.03f), folder,
+             STR(graph_morph_img));
+}
+
+void make_smoothing(Mat original, const std::string &folder) {
+  Mat img;
+  cvtColor(original, img, COLOR_RGB2GRAY);
 
   Mat graph_blur_img = original.clone();
   draw_line(
@@ -344,5 +342,25 @@ int main(int argc, char *argv[]) {
             {0, 234, 255});
   draw_line(graph_blur_img, filter_img(img, folder, "blur", &apply_blur),
             {0, 0, 255});
-  save_image(graph_blur_img, folder, STR(graph_blur_img));
+
+  save_image(crop_img(graph_blur_img, 0.535f, 0.05f, 0.5f, 0.03f), folder,
+             STR(graph_blur_img));
+}
+
+int main(int argc, char *argv[]) {
+
+  if (argc < 2) {
+    fmt::print("Not enough arguments. File path is needed\n");
+    return EXIT_FAILURE;
+  }
+
+  Mat img = imread(argv[1]);
+
+  std::string folder = make_save_folder();
+  make_csv(folder);
+  add_original_data(img, folder);
+  save_image(detect_edges(img), folder, "orignal_edges");
+
+  make_morphological(img, folder);
+  make_smoothing(img, folder);
 }
