@@ -1,7 +1,9 @@
 #pragma once
 
+#include <any>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -9,8 +11,23 @@ namespace sf {
 using namespace cv;
 
 class image_processor {
+  enum parameter_name;
+
+protected:
   std::filesystem::path folder;
   Mat original;
+  Mat kernel = Mat::ones(3, 3, CV_8UC1);
+  std::map<parameter_name, std::any> parameters;
+  void set_parameter(parameter_name param, std::any value) {
+    auto it = parameters.find(param);
+    if (it == parameters.end()) {
+      parameters.emplace(param, value);
+      return;
+    }
+    if (it->second.type() != value.type())
+      return;
+    it->second = value;
+  }
 
   template <class F, class... Args>
   Mat apply_filter(Mat img, F func, Args... args) {
@@ -18,13 +35,5 @@ class image_processor {
     std::invoke(func, img, filtered_img, std::forward<Args>(args)...);
     return filtered_img;
   }
-
-  template <class F, class... Args>
-  Mat apply_morphological_filter(Mat img, F func, Args... args) {
-    Point anchor(-1, -1);
-    int iteration_number = 3;
-    return apply_filter(img, &morphologyEx, MORPH_CLOSE, kernel, anchor,
-                        iteration_number, BORDER_CONSTANT,
-                        morphologyDefaultBorderValue());
-  };
+};
 } // namespace sf
