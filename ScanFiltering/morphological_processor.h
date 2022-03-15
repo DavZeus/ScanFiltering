@@ -6,11 +6,11 @@ using namespace cv;
 
 class morphological_processor : public image_processor {
 public:
-  enum parameter_name { anchor, iteration_number, custom_iteration_number };
   morphological_processor() {
-    parameters.emplace(anchor, Point{-1, -1});
-    parameters.emplace(iteration_number, 3);
-    parameters.emplace(custom_iteration_number, 1);
+    parameters.emplace(parameter::kernel, Mat::ones(3, 3, CV_8UC1));
+    parameters.emplace(parameter::anchor, Point{-1, -1});
+    parameters.emplace(parameter::iteration_number, 3);
+    parameters.emplace(parameter::custom_iteration_number, 1);
   }
 
 private:

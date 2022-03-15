@@ -27,6 +27,12 @@
     <ClCompile Include="smoothing_processor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="processor_parameters.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="io_operations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="image_processor.h">
@@ -36,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="smoothing_processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="io_operations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

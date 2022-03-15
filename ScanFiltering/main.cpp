@@ -31,6 +31,7 @@ const std::string_view data_filename = "big_data.csv";
 // Square
 Mat kernel = Mat::ones(3, 3, CV_8UC1);
 
+// Added
 template <class F, class... Args>
 Mat apply_filter(Mat img, F func, Args... args) {
   Mat filtered_img;
@@ -121,6 +122,7 @@ Mat apply_median_blur(Mat img) {
   return apply_filter(img, &medianBlur, size);
 }
 
+// Added
 std::string generate_time_string() {
   std::stringstream time_parse;
   tm tm;
@@ -131,6 +133,7 @@ std::string generate_time_string() {
   return time_parse.str();
 }
 
+// Added
 std::string make_save_folder(std::string path = "") {
   if (path.empty()) {
     path = generate_time_string();
@@ -141,6 +144,7 @@ std::string make_save_folder(std::string path = "") {
   return path;
 }
 
+// Added
 void save_image(Mat img, const std::string &path, const std::string &filename) {
   if (img.empty())
     return;
@@ -149,6 +153,7 @@ void save_image(Mat img, const std::string &path, const std::string &filename) {
   imwrite(fullname.string(), img);
 }
 
+// Added
 Mat detect_edges(Mat img) {
   Mat edges;
   const double low_threshold = 254;
@@ -157,6 +162,7 @@ Mat detect_edges(Mat img) {
   return edges;
 }
 
+// Added
 Mat cvt_to_bw(Mat img) {
   Mat bw_img = img.clone();
   bw_img.forEach<uint8_t>([](uint8_t &p, const int *pos) {
