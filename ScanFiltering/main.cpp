@@ -287,6 +287,7 @@ auto filter_img(Mat img, std::string folder, std::string save_name, F func) {
   return line_points;
 }
 
+// Added
 void make_csv(const std::string &folder) {
   std::filesystem::path fullpath(folder);
   fullpath /= data_filename.data();
