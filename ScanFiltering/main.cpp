@@ -204,6 +204,7 @@ void draw_points(Mat img, const std::vector<Point> &points,
     line(img, p, p, {255, 0, 0});
   }
 }
+// Added
 auto form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(line_points.begin(), line_points.end()).y /

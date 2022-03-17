@@ -15,6 +15,9 @@ using namespace cv;
 
 class image_processor {
   static constexpr std::string_view data_file{"data.csv"};
+  enum static constexpr std::string_view av_p{"average_point"};
+  static constexpr std::string_view max_dev{"maximum_deviation"};
+  static constexpr std::string_view av_dev{"average_deviation"};
 
 protected:
   std::filesystem::path folder;
@@ -36,8 +39,8 @@ protected:
 
   std::ofstream make_data_file();
   std::map<std::string, float> form_data(const std::vector<Point> &line_points);
-  void write_data(const std::string &folder, const std::string &name,
-                  std::map<std::string, float> data);
+  void
+  write_data(std::map<std::string, std::map<std::string_view, float>> data);
 
   ~image_processor() {}
 
