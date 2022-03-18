@@ -172,6 +172,7 @@ Mat cvt_to_bw(Mat img) {
   return bw_img;
 }
 
+// Added
 auto find_line_points(Mat img) {
   std::vector<Point> line_points;
   line_points.reserve(img.cols);
@@ -187,6 +188,7 @@ auto find_line_points(Mat img) {
   return line_points;
 }
 
+// Added
 void draw_line(Mat img, const std::vector<Point> &points,
                Scalar line_colour = {0, 0, 255}) {
   if (img.type() != CV_8UC3 || points.empty())
@@ -196,6 +198,7 @@ void draw_line(Mat img, const std::vector<Point> &points,
     line(img, *p1, *p2, line_colour);
   }
 }
+// Not needed
 void draw_points(Mat img, const std::vector<Point> &points,
                  Scalar point_colour = {255, 0, 0}) {
   if (img.type() != CV_8UC3)
@@ -225,6 +228,7 @@ auto form_data(const std::vector<Point> &line_points) {
   return data;
 }
 
+// Added
 void write_data(const std::string &folder, const std::string &name,
                 std::map<std::string, float> data) {
   std::filesystem::path full_path(folder);
@@ -241,6 +245,7 @@ void write_data(const std::string &folder, const std::string &name,
   f << std::regex_replace(r, std::regex{"Â"}, "");
 }
 
+// Not needed
 auto make_data(Mat img, const std::string &folder,
                const std::string &save_name) {
   auto line_points = find_line_points(img);
@@ -248,6 +253,7 @@ auto make_data(Mat img, const std::string &folder,
   return line_points;
 }
 
+// Added
 Mat crop_img(Mat img, const float center_x, const float part_x,
              const float center_y, const float part_y) {
   const float first_x = center_x - part_x;
@@ -261,6 +267,7 @@ Mat crop_img(Mat img, const float center_x, const float part_x,
   return img(Range(x0, x1), Range(y0, y1));
 }
 
+// Not needed
 Mat crop_img_common(Mat img) {
   return crop_img(img, 0.535f, 0.195f, 0.5f, 0.14f);
 }

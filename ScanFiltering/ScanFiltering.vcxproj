@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="custom_utility.cpp" />
     <ClCompile Include="image_processor.cpp" />
     <ClCompile Include="io_operations.cpp" />
     <ClCompile Include="main.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="smoothing_processor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="custom_utility.h" />
     <ClInclude Include="image_processor.h" />
     <ClInclude Include="io_operations.h" />
     <ClInclude Include="morphological_processor.h" />
