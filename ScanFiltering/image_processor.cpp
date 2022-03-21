@@ -42,7 +42,7 @@ std::ofstream image_processor::make_data_file() {
   auto full_path = folder / data_file;
   std::ofstream f(full_path);
 }
-std::map<std::string, float>
+std::map<image_processor::criterion, float>
 image_processor::form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(std::execution::par, line_points.begin(), line_points.end())
@@ -57,21 +57,20 @@ image_processor::form_data(const std::vector<Point> &line_points) {
       *std::max_element(deviation.begin(), deviation.end());
   const float average_deviation =
       std::reduce(deviation.begin(), deviation.end()) / deviation.size();
-  std::map<std::string, float> data;
+  std::map<criterion, float> data;
   data.emplace(criterion::average_point, average_point);
   data.emplace(criterion::maximum_deviation, max_deviation);
   data.emplace(criterion::average_deviation, average_deviation);
   return data;
 }
-void image_processor::write_data(
-    std::map<std::string_view, std::map<criterion, float>> data) {
+void image_processor::write_data() {
   auto file = make_data_file();
   if (!file) {
     fmt::print("Can not create/open data file\n");
     return;
   }
   file << ";Average point;Average deviation;Max deviation\n";
-  for (const auto &[method_name, method_data] : data) {
+  for (const auto &[method_name, method_data] : criterion_data) {
     std::string line =
         fmt::format(std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n",
                     method_name, method_data.at(criterion::average_point),
@@ -90,16 +89,23 @@ void image_processor::draw_line(Mat img, const std::vector<Point> &points,
     line(img, *p1, *p2, line_color);
   }
 }
-Mat image_processor::crop_img(Mat img, const float center_x, const float part_x,
-                              const float center_y, const float part_y) {
-  const float first_x = center_x - part_x;
-  const float second_x = center_x + part_x;
-  const float first_y = center_y - part_y;
-  const float second_y = center_y + part_y;
-  const int x0 = static_cast<int>(img.rows * first_y);
-  const int x1 = static_cast<int>(img.rows * second_y);
-  const int y0 = static_cast<int>(img.cols * first_x);
-  const int y1 = static_cast<int>(img.cols * second_x);
+Mat image_processor::crop_img(Mat img) {
+  const float center_x =
+      std::any_cast<float>(parameter_values.at(parameter::center_x));
+  const float shift_x =
+      std::any_cast<float>(parameter_values.at(parameter::shift_x));
+  const float first_x = center_x - shift_x;
+  const float second_x = center_x + shift_x;
+  const float center_y =
+      std::any_cast<float>(parameter_values.at(parameter::center_y));
+  const float shift_y =
+      std::any_cast<float>(parameter_values.at(parameter::shift_y));
+  const float first_y = center_y - shift_y;
+  const float second_y = center_y + shift_y;
+  const int x0 = img.rows * first_y;
+  const int x1 = img.rows * second_y;
+  const int y0 = img.cols * first_x;
+  const int y1 = img.cols * second_x;
   return img(Range(x0, x1), Range(y0, y1));
 }
 image_processor::image_processor() {
@@ -118,7 +124,7 @@ void image_processor::set_parameter(parameter param, std::any value) {
     auto message = fmt::format("Wrong parameter type. Type {} instead of {}",
                                value.type().name(), it->second.type().name());
     char *what = new char[message.length() + 1];
-    strcpy(what, message.c_str());
+    strcpy_s(what, message.length() + 1, message.c_str());
     throw std::exception(what);
   }
   it->second = value;

@@ -30,6 +30,7 @@ protected:
   std::string save_name;
   Mat original;
   std::map<parameter, std::any> parameter_values;
+  std::map<std::string_view, std::map<criterion, float>> criterion_data;
 
   template <class F, class... Args>
   Mat apply_filter(Mat img, F func, Args... args) {
@@ -45,13 +46,12 @@ protected:
   std::vector<Point> find_line_points(Mat img);
 
   std::ofstream make_data_file();
-  std::map<std::string, float> form_data(const std::vector<Point> &line_points);
-  void write_data(std::map<std::string_view, std::map<criterion, float>> data);
+  std::map<criterion, float> form_data(const std::vector<Point> &line_points);
+  void write_data();
 
   void draw_line(Mat img, const std::vector<Point> &points,
                  Scalar line_color = {0, 0, 255});
-  Mat crop_img(Mat img, const float center_x, const float part_x,
-               const float center_y, const float part_y);
+  Mat crop_img(Mat img);
 
   ~image_processor() {}
 
