@@ -6,9 +6,7 @@
 #include <regex>
 
 #include "custom_utility.h"
-
-#define _STR(x) "_" #x
-#define STR(x) #x
+#include "io_operations.h"
 
 namespace sf {
 Mat image_processor::detect_edges(Mat img) {
@@ -39,10 +37,10 @@ std::vector<Point> image_processor::find_line_points(Mat img) {
   return line_points;
 }
 std::ofstream image_processor::make_data_file() {
-  auto full_path = folder / data_file;
+  auto full_path = folder / data_name;
   std::ofstream f(full_path);
 }
-std::map<image_processor::criterion, float>
+std::array<float, cu::tot(image_processor::criterion::enum_count)>
 image_processor::form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(std::execution::par, line_points.begin(), line_points.end())
@@ -57,10 +55,10 @@ image_processor::form_data(const std::vector<Point> &line_points) {
       *std::max_element(deviation.begin(), deviation.end());
   const float average_deviation =
       std::reduce(deviation.begin(), deviation.end()) / deviation.size();
-  std::map<criterion, float> data;
-  data.emplace(criterion::average_point, average_point);
-  data.emplace(criterion::maximum_deviation, max_deviation);
-  data.emplace(criterion::average_deviation, average_deviation);
+  std::array<float, cu::tot(image_processor::criterion::enum_count)> data;
+  data.at(cu::tot(criterion::average_point)) = average_point;
+  data.at(cu::tot(criterion::maximum_deviation)) = max_deviation;
+  data.at(cu::tot(criterion::average_deviation)) = average_deviation;
   return data;
 }
 void image_processor::write_data() {
@@ -71,11 +69,11 @@ void image_processor::write_data() {
   }
   file << ";Average point;Average deviation;Max deviation\n";
   for (const auto &[method_name, method_data] : criterion_data) {
-    std::string line =
-        fmt::format(std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n",
-                    method_name, method_data.at(criterion::average_point),
-                    method_data.at(criterion::average_deviation),
-                    method_data.at(criterion::maximum_deviation));
+    std::string line = fmt::format(
+        std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n", method_name,
+        method_data.at(cu::tot(criterion::average_point)),
+        method_data.at(cu::tot(criterion::average_deviation)),
+        method_data.at(cu::tot(criterion::maximum_deviation)));
     cu::remove_ru_separator(line);
     file << line;
   }
@@ -90,44 +88,15 @@ void image_processor::draw_line(Mat img, const std::vector<Point> &points,
   }
 }
 Mat image_processor::crop_img(Mat img) {
-  const float center_x =
-      std::any_cast<float>(parameter_values.at(parameter::center_x));
-  const float shift_x =
-      std::any_cast<float>(parameter_values.at(parameter::shift_x));
   const float first_x = center_x - shift_x;
   const float second_x = center_x + shift_x;
-  const float center_y =
-      std::any_cast<float>(parameter_values.at(parameter::center_y));
-  const float shift_y =
-      std::any_cast<float>(parameter_values.at(parameter::shift_y));
   const float first_y = center_y - shift_y;
   const float second_y = center_y + shift_y;
-  const int x0 = img.rows * first_y;
-  const int x1 = img.rows * second_y;
-  const int y0 = img.cols * first_x;
-  const int y1 = img.cols * second_x;
+  const int x0 = static_cast<int>(img.rows * first_y);
+  const int x1 = static_cast<int>(img.rows * second_y);
+  const int y0 = static_cast<int>(img.cols * first_x);
+  const int y1 = static_cast<int>(img.cols * second_x);
   return img(Range(x0, x1), Range(y0, y1));
-}
-image_processor::image_processor() {
-  parameter_values.emplace(parameter::center_x, 0.535f);
-  parameter_values.emplace(parameter::center_y, 0.5f);
-  parameter_values.emplace(parameter::shift_x, 0.05f);
-  parameter_values.emplace(parameter::shift_y, 0.03f);
-}
-void image_processor::set_parameter(parameter param, std::any value) {
-  auto it = parameter_values.find(param);
-  if (it == parameter_values.end()) {
-    parameter_values.emplace(param, value);
-    return;
-  }
-  if (it->second.type() != value.type()) {
-    auto message = fmt::format("Wrong parameter type. Type {} instead of {}",
-                               value.type().name(), it->second.type().name());
-    char *what = new char[message.length() + 1];
-    strcpy_s(what, message.length() + 1, message.c_str());
-    throw std::exception(what);
-  }
-  it->second = value;
 }
 Mat image_processor::cvt_non_white_to_black(Mat img) {
   Mat bw_img;
@@ -135,8 +104,20 @@ Mat image_processor::cvt_non_white_to_black(Mat img) {
   return bw_img;
 }
 void image_processor::set_original_image(Mat img) { original = img; }
-void image_processor::set_save_name(std::string name) {
-  save_name = std::move(name);
+void image_processor::set_save_name(std::filesystem::path name) {
+  if (name.empty()) {
+    return;
+  }
+  if (name.extension() != ".csv") {
+    name.append(".csv");
+  }
+  data_name = std::move(name);
 }
-void image_processor::set_folder(std::string) {}
+void image_processor::set_folder(std::filesystem::path folder) {
+  if (folder.empty()) {
+    this->folder = io::make_save_folder();
+  } else {
+    this->folder = std::move(folder);
+  }
+}
 } // namespace sf

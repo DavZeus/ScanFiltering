@@ -3,6 +3,10 @@
 
 namespace sf {
 using namespace cv;
+Mat kernel = Mat::ones(3, 3, CV_8UC1);
+Point anchor = Point{-1, -1};
+int iteration_number = 3;
+int custom_iteration_number = 1;
 
 class morphological_processor : public image_processor {
   template <class F, class... Args>
@@ -16,6 +20,5 @@ class morphological_processor : public image_processor {
   template <class F, class... Args> Mat apply_custom_filter() {}
 
 public:
-  morphological_processor();
 };
 } // namespace sf

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <any>
 #include <array>
 #include <filesystem>
 #include <fstream>
@@ -10,27 +9,32 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "processor_parameters.h"
+#include "custom_utility.h"
 
 namespace sf {
 using namespace cv;
 
 class image_processor {
 protected:
-  static constexpr std::string_view data_file{"data.csv"};
-
-  enum class criterion {
+  enum class criterion : size_t {
     average_point,
     maximum_deviation,
     average_deviation,
-    count
+
+    enum_count
   };
 
   std::filesystem::path folder;
-  std::string save_name;
+  std::filesystem::path data_name{"data.csv"};
+  std::map<std::string_view, std::array<float, cu::tot(criterion::enum_count)>>
+      criterion_data;
+
   Mat original;
-  std::map<parameter, std::any> parameter_values;
-  std::map<std::string_view, std::map<criterion, float>> criterion_data;
+
+  float center_x = 0.535f;
+  float center_y = 0.5f;
+  float shift_x = 0.05f;
+  float shift_y = 0.03f;
 
   template <class F, class... Args>
   Mat apply_filter(Mat img, F func, Args... args) {
@@ -44,9 +48,9 @@ protected:
   void save_image(Mat img, const std::string &name);
 
   std::vector<Point> find_line_points(Mat img);
-
   std::ofstream make_data_file();
-  std::map<criterion, float> form_data(const std::vector<Point> &line_points);
+  std::array<float, cu::tot(criterion::enum_count)>
+  form_data(const std::vector<Point> &line_points);
   void write_data();
 
   void draw_line(Mat img, const std::vector<Point> &points,
@@ -56,12 +60,9 @@ protected:
   ~image_processor() {}
 
 public:
-  image_processor();
-
-  void set_parameter(parameter param, std::any value);
   void set_original_image(Mat img);
-  void set_save_name(std::string name);
-  void set_folder(std::string = "");
+  void set_save_name(std::filesystem::path name);
+  void set_folder(std::filesystem::path folder = "");
   virtual void generate() = 0;
 };
 } // namespace sf

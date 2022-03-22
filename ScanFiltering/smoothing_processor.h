@@ -6,6 +6,5 @@ using namespace cv;
 
 class smoothing_processor : public image_processor {
 public:
-  smoothing_processor();
 };
 } // namespace sf
