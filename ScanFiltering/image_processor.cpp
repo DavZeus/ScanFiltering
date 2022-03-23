@@ -39,6 +39,7 @@ std::vector<Point> image_processor::find_line_points(Mat img) {
 std::ofstream image_processor::make_data_file() {
   auto full_path = folder / data_name;
   std::ofstream f(full_path);
+  return f;
 }
 std::array<float, image_processor::criterion::enum_count>
 image_processor::form_data(const std::vector<Point> &line_points) {
