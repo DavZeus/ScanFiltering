@@ -9,25 +9,23 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "custom_utility.h"
-
 namespace sf {
 using namespace cv;
 
 class image_processor {
 protected:
-  enum class criterion : size_t {
+  enum criterion : size_t {
     average_point,
     maximum_deviation,
     average_deviation,
 
     enum_count
   };
+  using criterion_array = std::array<float, criterion::enum_count>;
 
   std::filesystem::path folder;
   std::filesystem::path data_name{"data.csv"};
-  std::map<std::string_view, std::array<float, cu::tot(criterion::enum_count)>>
-      criterion_data;
+  std::map<std::string_view, criterion_array> method_data;
 
   Mat original;
 
@@ -49,8 +47,7 @@ protected:
 
   std::vector<Point> find_line_points(Mat img);
   std::ofstream make_data_file();
-  std::array<float, cu::tot(criterion::enum_count)>
-  form_data(const std::vector<Point> &line_points);
+  criterion_array form_data(const std::vector<Point> &line_points);
   void write_data();
 
   void draw_line(Mat img, const std::vector<Point> &points,

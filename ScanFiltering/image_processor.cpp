@@ -40,7 +40,7 @@ std::ofstream image_processor::make_data_file() {
   auto full_path = folder / data_name;
   std::ofstream f(full_path);
 }
-std::array<float, cu::tot(image_processor::criterion::enum_count)>
+std::array<float, image_processor::criterion::enum_count>
 image_processor::form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(std::execution::par, line_points.begin(), line_points.end())
@@ -55,10 +55,10 @@ image_processor::form_data(const std::vector<Point> &line_points) {
       *std::max_element(deviation.begin(), deviation.end());
   const float average_deviation =
       std::reduce(deviation.begin(), deviation.end()) / deviation.size();
-  std::array<float, cu::tot(image_processor::criterion::enum_count)> data;
-  data.at(cu::tot(criterion::average_point)) = average_point;
-  data.at(cu::tot(criterion::maximum_deviation)) = max_deviation;
-  data.at(cu::tot(criterion::average_deviation)) = average_deviation;
+  criterion_array data{};
+  data.at(criterion::average_point) = average_point;
+  data.at(criterion::maximum_deviation) = max_deviation;
+  data.at(criterion::average_deviation) = average_deviation;
   return data;
 }
 void image_processor::write_data() {
@@ -68,7 +68,7 @@ void image_processor::write_data() {
     return;
   }
   file << ";Average point;Average deviation;Max deviation\n";
-  for (const auto &[method_name, method_data] : criterion_data) {
+  for (const auto &[method_name, method_data] : method_data) {
     std::string line = fmt::format(
         std::locale("ru_RU.UTF-8"), "{};{:.2Lf};{:.2Lf};{:.2Lf}\n", method_name,
         method_data.at(cu::tot(criterion::average_point)),
