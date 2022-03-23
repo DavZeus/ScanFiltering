@@ -26,6 +26,7 @@ protected:
   std::filesystem::path folder;
   std::filesystem::path data_name{"data.csv"};
   std::map<std::string_view, criterion_array> method_data;
+  std::map<std::string_view, std::vector<cv::Point>> lines;
 
   Mat original;
 
@@ -39,6 +40,20 @@ protected:
     Mat filtered_img;
     std::invoke(func, img, filtered_img, std::forward<Args>(args)...);
     return filtered_img;
+  }
+  template <class F>
+  Mat process_img(Mat img, std::string_view method_name, F func) {
+    Mat f_img = std::invoke(func, img);
+
+    save_image(f_img, folder, std::string(method_name) + "_f");
+
+    auto line_points = find_line_points(f_img);
+    Mat line_img;
+    cvtColor(img, line_img, COLOR_GRAY2BGR);
+    draw_line(line_img, line_points);
+    save_image(crop_img(line_img), folder, std::string(method_name) + "_line");
+
+    lines.emplace(method_name, std::move(line_points));
   }
 
   Mat cvt_non_white_to_black(Mat img);

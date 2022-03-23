@@ -9,16 +9,15 @@ int iteration_number = 3;
 int custom_iteration_number = 1;
 
 class morphological_processor : public image_processor {
-  template <class F, class... Args>
-  Mat apply_morphological_filter(Mat img, F func, Args... args) {
-    Point anchor(-1, -1);
-    int iteration_number = 3;
-    return apply_filter(img, &morphologyEx, args..., BORDER_CONSTANT,
-                        morphologyDefaultBorderValue());
+  template <class F> Mat apply_morphological_filter(Mat img, F func) {
+    return apply_filter(img, &morphologyEx, kernel, anchor, iteration_number,
+                        BORDER_CONSTANT, morphologyDefaultBorderValue());
   }
-
   template <class F, class... Args> Mat apply_custom_filter() {}
 
+  Mat process_dilate(Mat img);
+
 public:
+  void generate();
 };
 } // namespace sf
