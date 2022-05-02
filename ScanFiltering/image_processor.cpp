@@ -21,6 +21,7 @@ std::ofstream image_processor::make_data_file() {
   std::ofstream f(full_path);
   // TODO: Move to data fill function
   f << ";Average point;Average deviation;Max deviation\n";
+  return std::ofstream();
 }
 void image_processor::set_parameter(parameter param, std::any value) {
   auto it = parameters.find(param);
@@ -32,8 +33,8 @@ void image_processor::set_parameter(parameter param, std::any value) {
     auto message = fmt::format("Wrong parameter type. Type {} instead of {}",
                                value.type().name(), it->second.type().name());
     char *what = new char[message.length() + 1];
-    strcpy(what, message.c_str());
-    throw std::exception(what);
+    // strcpy(what, message.c_str());
+    // throw std::exception(what);
   }
   it->second = value;
 }
@@ -46,6 +47,6 @@ void image_processor::set_original_image(Mat img) { original = img; }
 void image_processor::set_save_name(std::string name) {
   save_name = std::move(name);
 }
-void image_processor::set_folder(std::string) {}
+void image_processor::set_folder(std::string folder) {}
 void image_processor::generate() {}
 } // namespace sf

@@ -45,7 +45,7 @@ public:
   void set_parameter(parameter param, std::any value);
   void set_original_image(Mat img);
   void set_save_name(std::string name);
-  void set_folder(std::string = "");
+  void set_folder(std::string folder = "");
   virtual void generate() = 0;
 };
 } // namespace sf
