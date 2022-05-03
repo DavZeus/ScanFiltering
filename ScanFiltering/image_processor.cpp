@@ -75,7 +75,7 @@ void image_processor::write_data() {
         method_data.at(cu::tot(criterion::average_point)),
         method_data.at(cu::tot(criterion::average_deviation)),
         method_data.at(cu::tot(criterion::maximum_deviation)));
-    cu::remove_ru_separator(line);
+    cu::remove_wrong_ru_separator(line);
     file << line;
   }
 }
