@@ -40,7 +40,7 @@ std::ofstream image_processor::make_data_file() {
   const auto full_filename = folder / data_name;
   return std::ofstream(full_filename);
 }
-std::array<float, image_processor::criterion::enum_count>
+image_processor::criterion_array
 image_processor::form_data(const std::vector<Point> &line_points) {
   const float average_point =
       std::reduce(std::execution::par, line_points.begin(), line_points.end())
