@@ -32,7 +32,12 @@ class drawer {
 
   void draw_line(Mat img, const line &points, Scalar line_color = {0, 0, 255});
 
+  struct coordinates {
+    int x0, x1, y0, y1;
+  };
+  coordinates calculate_crop_coords(Mat img);
   Mat crop_img(Mat img);
+  void make_crop_rectangle(Mat img);
 
   Mat detect_edges(Mat img);
   void make_edge_imgs(Mat original, const map_of_images &imgs);
