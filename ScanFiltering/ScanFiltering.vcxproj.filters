@@ -27,13 +27,16 @@
     <ClCompile Include="smoothing_processor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="processor_parameters.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="io_operations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="custom_utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="analyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="drawer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,6 +54,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="custom_utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="analyzer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="drawer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
