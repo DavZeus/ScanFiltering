@@ -145,9 +145,9 @@ std::ofstream analyzer::make_data_file(const std::filesystem::path &filename) {
 }
 std::string analyzer::form_data_header() {
   return fmt::format(";{};{};{};{};{};{};{}\n", STR(avg_point),
-                     STR(avg_deviation), STR(avg_deviation_percent),
-                     STR(avg_deviation_relative), STR(max_deviation),
-                     STR(max_deviation_percent), STR(max_deviation_relative));
+                     STR(avg_deviation), STR(avg_deviation_relative),
+                     STR(avg_deviation_percent), STR(max_deviation),
+                     STR(max_deviation_relative), STR(max_deviation_percent));
 }
 std::string analyzer::form_line_values(const criterion_array &values) {
   std::string line{""};
