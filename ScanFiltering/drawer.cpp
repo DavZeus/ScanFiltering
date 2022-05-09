@@ -80,6 +80,7 @@ void drawer::make_graph_img(Mat original, const map_of_lines &lines) {
   size_t i = 0;
   for (const auto &[filter_name, points] : lines) {
     draw_line(graph_img, points, get_color(i));
+    i++;
   }
   save_image(graph_img, "graph");
   save_image(crop_img(graph_img), "graph_crop");
