@@ -31,6 +31,7 @@ class analyzer {
   using map_of_lines = std::map<std::string_view, line>;
 
   std::filesystem::path folder;
+  std::filesystem::path common_name;
   std::filesystem::path data_filename{"data.csv"};
   std::filesystem::path distribution_filename{"distrib.csv"};
 
@@ -68,8 +69,9 @@ class analyzer {
 public:
   map_of_lines generate_data(std::map<std::string_view, Mat> imgs);
 
-  void set_folder(std::string folder);
-  void set_data_filename(std::string filename);
-  void set_distribution_filename(std::string filename);
+  void set_folder(std::filesystem::path folder);
+  void set_common_filename(std::filesystem::path filename);
+  void set_data_filename(std::filesystem::path filename);
+  void set_distribution_filename(std::filesystem::path filename);
 };
 } // namespace sf

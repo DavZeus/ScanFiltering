@@ -187,13 +187,20 @@ analyzer::generate_data(std::map<std::string_view, Mat> imgs) {
   make_deviation_distribution(data, lines);
   return lines;
 }
-void analyzer::set_folder(std::string folder) {
+void analyzer::set_folder(std::filesystem::path folder) {
   this->folder = std::move(folder);
 }
-void analyzer::set_data_filename(std::string filename) {
+void analyzer::set_common_filename(std::filesystem::path filename) {
+  common_name = std::move(filename);
+}
+void analyzer::set_data_filename(std::filesystem::path filename) {
+  if (filename.extension() != ".csv")
+    filename += ".csv";
   data_filename = std::move(filename);
 }
-void analyzer::set_distribution_filename(std::string filename) {
+void analyzer::set_distribution_filename(std::filesystem::path filename) {
+  if (filename.extension() != ".csv")
+    filename += ".csv";
   distribution_filename = std::move(filename);
 }
 } // namespace sf
