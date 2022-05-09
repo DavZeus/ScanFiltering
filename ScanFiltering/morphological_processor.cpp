@@ -25,16 +25,22 @@ Mat morphological_processor::apply_opening(Mat img) {
 Mat morphological_processor::apply_custom_closer(Mat img) {
   unsigned counter = custom_iteration_number;
   while (counter--) {
-    Mat iteration_img = apply_dilate(img);
-    img = apply_erode(iteration_img);
+    Mat iteration_img =
+        apply_filter(img, dilate, kernel, anchor, 1, BORDER_CONSTANT,
+                     morphologyDefaultBorderValue());
+    img = apply_filter(img, &erode, kernel, anchor, 1, BORDER_CONSTANT,
+                       morphologyDefaultBorderValue());
   }
   return img;
 }
 Mat morphological_processor::apply_custom_opening(Mat img) {
   unsigned counter = custom_iteration_number;
   while (counter--) {
-    Mat iteration_img = apply_erode(img);
-    img = apply_dilate(img);
+    Mat iteration_img =
+        apply_filter(img, &erode, kernel, anchor, 1, BORDER_CONSTANT,
+                     morphologyDefaultBorderValue());
+    img = apply_filter(img, dilate, kernel, anchor, 1, BORDER_CONSTANT,
+                       morphologyDefaultBorderValue());
   }
   return img;
 }

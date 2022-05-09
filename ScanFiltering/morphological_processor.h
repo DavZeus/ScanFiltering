@@ -8,7 +8,7 @@ class morphological_processor : public image_processor {
   Mat kernel = Mat::ones(3, 3, CV_8UC1);
   Point anchor = Point{-1, -1};
   int iteration_number = 3;
-  int custom_iteration_number = 1;
+  int custom_iteration_number = 3;
 
 public:
   Mat apply_dilate(Mat img);
