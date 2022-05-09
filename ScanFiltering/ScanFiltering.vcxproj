@@ -147,6 +147,7 @@
     <ClCompile Include="io_operations.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="morphological_processor.cpp" />
+    <ClCompile Include="old_logic.cpp" />
     <ClCompile Include="smoothing_processor.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="image_processor.h" />
     <ClInclude Include="io_operations.h" />
     <ClInclude Include="morphological_processor.h" />
+    <ClInclude Include="old_logic.h" />
     <ClInclude Include="smoothing_processor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
