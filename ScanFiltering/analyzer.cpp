@@ -140,7 +140,8 @@ void analyzer::make_deviation_distribution(const map_of_criterion_data &data,
 }
 
 std::ofstream analyzer::make_data_file(const std::filesystem::path &filename) {
-  const auto full_filename = folder / filename;
+  const auto full_filename =
+      folder / (common_name.string() + '_' + filename.string());
   return std::ofstream(full_filename);
 }
 std::string analyzer::form_data_header() {
