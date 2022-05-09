@@ -13,10 +13,10 @@ class analyzer {
     avg_point,
     avg_deviation,
     avg_deviation_relative = avg_deviation + relative_shift,
-    avg_deviation_percent = avg_deviation,
+    avg_deviation_percent,
     max_deviation,
     max_deviation_relative = max_deviation + relative_shift,
-    max_deviation_percent = max_deviation,
+    max_deviation_percent,
 
     enum_count
   };
