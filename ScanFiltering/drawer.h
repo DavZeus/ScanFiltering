@@ -48,7 +48,7 @@ class drawer {
   void make_graph_img(Mat original, const map_of_lines &lines);
 
 public:
-  void set_folder(std::string folder);
+  void set_folder(std::filesystem::path folder);
   void set_common_name(std::string name);
   void set_crop(float center_x, float center_y, float shift_x, float shift_y);
   void make_info_images(Mat original, const map_of_images &imgs,

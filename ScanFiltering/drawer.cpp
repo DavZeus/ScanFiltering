@@ -84,7 +84,7 @@ void drawer::make_graph_img(Mat original, const map_of_lines &lines) {
   save_image(graph_img, "graph");
   save_image(crop_img(graph_img), "graph_crop");
 }
-void drawer::set_folder(std::string folder) {
+void drawer::set_folder(std::filesystem::path folder) {
   this->folder = std::move(folder);
 }
 void drawer::set_common_name(std::string name) {
