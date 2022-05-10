@@ -30,22 +30,23 @@ drawer::coordinates drawer::calculate_crop_coords(Mat img) {
   const float first_y = center_y - shift_y;
   const float second_y = center_y + shift_y;
   coordinates crop_coords{};
-  crop_coords.x0 = static_cast<int>(img.rows * first_y);
-  crop_coords.x1 = static_cast<int>(img.rows * second_y);
-  crop_coords.y0 = static_cast<int>(img.cols * first_x);
-  crop_coords.y1 = static_cast<int>(img.cols * second_x);
+  crop_coords.y0 = static_cast<int>(img.rows * first_y);
+  crop_coords.y1 = static_cast<int>(img.rows * second_y);
+  crop_coords.x0 = static_cast<int>(img.cols * first_x);
+  crop_coords.x1 = static_cast<int>(img.cols * second_x);
   return crop_coords;
 }
 Mat drawer::crop_img(Mat img) {
   auto crop_coords = calculate_crop_coords(img);
-  return img(Range(crop_coords.x0, crop_coords.x1),
-             Range(crop_coords.y0, crop_coords.y1));
+  return img(Range(crop_coords.y0, crop_coords.y1),
+             Range(crop_coords.x0, crop_coords.x1));
 }
 void drawer::make_crop_rectangle(Mat img) {
   Mat img_with_crop_rectangle = img.clone();
   auto crop_coords = calculate_crop_coords(img);
   rectangle(img_with_crop_rectangle, {crop_coords.x0, crop_coords.y0},
             {crop_coords.x1, crop_coords.y1}, get_best_color(), 2);
+  save_image(img_with_crop_rectangle, "crop_rectangle");
 }
 Mat drawer::detect_edges(Mat img) {
   Mat edges;
