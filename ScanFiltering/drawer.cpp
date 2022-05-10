@@ -24,7 +24,9 @@ void drawer::draw_line(Mat img, const line &points, Scalar line_color) {
     cv::line(img, *p1, *p2, line_color);
   }
 }
-drawer::coordinates drawer::calculate_crop_coords(Mat img) {
+drawer::coordinates drawer::calculate_crop_coords(Mat img, float center_x,
+                                                  float shift_x, float center_y,
+                                                  float shift_y) {
   const float first_x = center_x - shift_x;
   const float second_x = center_x + shift_x;
   const float first_y = center_y - shift_y;
@@ -36,10 +38,19 @@ drawer::coordinates drawer::calculate_crop_coords(Mat img) {
   crop_coords.x1 = static_cast<int>(img.cols * second_x);
   return crop_coords;
 }
-Mat drawer::crop_img(Mat img) {
-  auto crop_coords = calculate_crop_coords(img);
+Mat drawer::crop_img(Mat img, float center_x, float shift_x, float center_y,
+                     float shift_y) {
+  auto crop_coords =
+      calculate_crop_coords(img, center_x, shift_x, center_y, shift_y);
   return img(Range(crop_coords.y0, crop_coords.y1),
              Range(crop_coords.x0, crop_coords.x1));
+}
+Mat drawer::crop_img(Mat img) {
+  return crop_img(img, center_x, shift_x, center_y, shift_y);
+}
+Mat drawer::resize_img(Mat img) {
+  return crop_img(img, resize_center_x, resize_shift_x, resize_center_y,
+                  resize_shift_y);
 }
 void drawer::make_crop_rectangle(Mat img) {
   Mat img_with_crop_rectangle = img.clone();
@@ -67,6 +78,7 @@ Mat drawer::form_single_line_image(Mat img, const line &points) {
   draw_line(img_with_line, points, get_best_color());
   return img_with_line;
 }
+void drawer::make_resized_img(Mat img) {}
 void drawer::make_line_imgs(const map_of_images &imgs,
                             const map_of_lines &lines) {
   for (const auto &[filter_name, img] : imgs) {
@@ -74,6 +86,8 @@ void drawer::make_line_imgs(const map_of_images &imgs,
     save_image(img_with_line, std::string(filter_name) + "_line");
     save_image(crop_img(img_with_line),
                std::string(filter_name) + "_line_crop");
+    save_image(resize_img(img_with_line),
+               std::string(filter_name) + "_line_resize");
   }
 }
 void drawer::make_graph_img(Mat original, const map_of_lines &lines) {

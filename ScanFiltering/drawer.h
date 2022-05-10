@@ -26,6 +26,11 @@ class drawer {
   float shift_x = 0.05f;
   float shift_y = 0.03f;
 
+  float resize_center_x = 0.535f;
+  float resize_center_y = 0.5f;
+  float resize_shift_x = 0.195f;
+  float resize_shift_y = 0.14f;
+
   std::string common_name;
   std::filesystem::path folder;
   void save_image(Mat img, const std::string &name);
@@ -35,14 +40,19 @@ class drawer {
   struct coordinates {
     int x0, x1, y0, y1;
   };
-  coordinates calculate_crop_coords(Mat img);
+  coordinates calculate_crop_coords(Mat img, float center_x, float shift_x,
+                                    float center_y, float shift_y);
+  Mat crop_img(Mat img, float center_x, float shift_x, float center_y,
+               float shift_y);
   Mat crop_img(Mat img);
+  Mat resize_img(Mat img);
   void make_crop_rectangle(Mat img);
 
   Mat detect_edges(Mat img);
   void make_edge_imgs(Mat original, const map_of_images &imgs);
 
   Mat form_single_line_image(Mat img, const line &points);
+  void make_resized_img(Mat img);
   void make_line_imgs(const map_of_images &imgs, const map_of_lines &lines);
 
   void make_graph_img(Mat original, const map_of_lines &lines);
