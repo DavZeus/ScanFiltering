@@ -42,6 +42,7 @@ class analyzer {
   std::vector<float> find_deviation(const line &line, float avg_point);
   float find_max_deviation(const std::vector<float> deviation);
   float find_avg_deviation(const std::vector<float> deviation);
+  float find_percent(float average, float deviation);
   criterion_array form_line_independent_data(const line &line);
   map_of_criterion_data form_all_independent_data(const map_of_lines &lines);
 

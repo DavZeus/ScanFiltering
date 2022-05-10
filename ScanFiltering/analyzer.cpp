@@ -53,6 +53,9 @@ float analyzer::find_max_deviation(const std::vector<float> deviation) {
 float analyzer::find_avg_deviation(const std::vector<float> deviation) {
   return std::reduce(deviation.begin(), deviation.end()) / deviation.size();
 }
+float analyzer::find_percent(float point, float deviation) {
+  return std::abs((point + deviation) / point - 1.f) * 100.f;
+}
 analyzer::criterion_array
 analyzer::form_line_independent_data(const line &points) {
   const float average_point = find_avg_point(points);
@@ -63,13 +66,12 @@ analyzer::form_line_independent_data(const line &points) {
   data.at(avg_point) = average_point;
   data.at(avg_deviation) = average_deviation;
   data.at(avg_deviation_percent) =
-      std::abs(average_deviation / average_point - 1.f) * 100.f;
+      find_percent(average_point, average_deviation);
   data.at(max_deviation) = maximum_deviation;
   data.at(max_deviation_percent) =
-      std::abs(maximum_deviation / average_point - 1.f) * 100.f;
+      find_percent(average_point, maximum_deviation);
   return data;
 }
-
 analyzer::map_of_criterion_data
 analyzer::form_all_independent_data(const map_of_lines &lines) {
   map_of_criterion_data data;
@@ -78,7 +80,6 @@ analyzer::form_all_independent_data(const map_of_lines &lines) {
   }
   return data;
 }
-
 float analyzer::find_min_criterion_value(const map_of_criterion_data &data,
                                          criterion name) {
   return std::min_element(
